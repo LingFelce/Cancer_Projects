@@ -1,5 +1,5 @@
 ---
-title: "Single-cell RNA-Seq analysis of CD8+ SARS-CoV-2 specific T cells"
+title: "Single-cell RNA-Seq analysis of CD8 PD-1 Neg or Pos cells"
 output:
   word_document: default
   html_document: default
@@ -117,11 +117,83 @@ UMAP_pos_cluster <- DimPlot(pos_539, reduction = "umap", group.by = "seurat_clus
 
 UMAP_neg_cluster + UMAP_pos_cluster
 ```
+### Find All Markers
+```{r}
+setwd('/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/')
+
+neg_539.markers <- FindAllMarkers(object = neg_539, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+write.csv (neg_539.markers, "neg_539_markers.csv")
+
+pos_539.markers <- FindAllMarkers(object = pos_539, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+write.csv (pos_539.markers, "pos_539_markers.csv")
+
+```
+
+### Use Calli's list for cell annotation
+
+```{r calli's markers}
+tmarkers <- read.csv("Markers_for_Ling.csv", header=F)
+
+# PD1 Neg
+cluster_0 <- neg_539.markers[neg_539.markers$cluster == "0", ]
+cluster_1 <- neg_539.markers[neg_539.markers$cluster == "1", ]
+cluster_2 <- neg_539.markers[neg_539.markers$cluster == "2", ]
+cluster_3 <- neg_539.markers[neg_539.markers$cluster == "3", ]
+cluster_4 <- neg_539.markers[neg_539.markers$cluster == "4", ]
+cluster_5 <- neg_539.markers[neg_539.markers$cluster == "5", ]
+cluster_6 <- neg_539.markers[neg_539.markers$cluster == "6", ]
+cluster_7 <- neg_539.markers[neg_539.markers$cluster == "7", ]
+cluster_8 <- neg_539.markers[neg_539.markers$cluster == "8", ]
+
+cluster_0 <- cluster_0[cluster_0$p_val_adj < 0.05,]
+cluster_1 <- cluster_1[cluster_1$p_val_adj < 0.05,]
+cluster_2 <- cluster_2[cluster_2$p_val_adj < 0.05,]
+cluster_3 <- cluster_3[cluster_3$p_val_adj < 0.05,]
+cluster_4 <- cluster_4[cluster_4$p_val_adj < 0.05,]
+cluster_5 <- cluster_5[cluster_5$p_val_adj < 0.05,]
+cluster_6 <- cluster_6[cluster_6$p_val_adj < 0.05,]
+cluster_7 <- cluster_7[cluster_7$p_val_adj < 0.05,]
+cluster_8 <- cluster_8[cluster_8$p_val_adj < 0.05,]
+
+
+genes_0 <- tmarkers[is.element(tmarkers$V1, cluster_0$gene),]
+genes_1 <- tmarkers[is.element(tmarkers$V1, cluster_1$gene),]
+genes_2 <- tmarkers[is.element(tmarkers$V1, cluster_2$gene),]
+genes_3 <- tmarkers[is.element(tmarkers$V1, cluster_3$gene),]
+genes_4 <- tmarkers[is.element(tmarkers$V1, cluster_4$gene),]
+genes_5 <- tmarkers[is.element(tmarkers$V1, cluster_5$gene),]
+genes_6 <- tmarkers[is.element(tmarkers$V1, cluster_6$gene),]
+genes_7 <- tmarkers[is.element(tmarkers$V1, cluster_7$gene),]
+genes_8 <- tmarkers[is.element(tmarkers$V1, cluster_8$gene),]
+
+# PD1 Pos
+
+```
+
+
+
+
+
 ### Find anchors and integrate
 
 ```{r integrate}
 
 pancreas.anchors <- FindIntegrationAnchors(object.list = c(neg_539, pos_539), dims = 1:30)
+
+anchors.539 <- pancreas.anchors
+
+integrated.539 <- IntegrateData(anchorset = anchors.539, dims = 1:30)
+
+DefaultAssay(integrated.539) <- "integrated"
+
+# Run the standard workflow for visualization and clustering
+integrated.539 <- ScaleData(integrated.539, verbose = FALSE)
+integrated.539 <- RunPCA(integrated.539, npcs = 30, verbose = FALSE)
+integrated.539 <- RunUMAP(integrated.539, reduction = "pca", dims = 1:30)
+p1 <- DimPlot(integrated.539, reduction = "umap", group.by = "tech")
+p2 <- DimPlot(integrated.539, reduction = "umap", group.by = "celltype", label = TRUE, 
+    repel = TRUE) + NoLegend()
+p1 + p2
 
 ```
 
