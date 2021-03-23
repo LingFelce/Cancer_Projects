@@ -19,15 +19,17 @@ library(ggplot2)
 library(data.table)
 library(tidyverse)
 library(gridExtra)
+library(harmony)
 ```
 
 # Comparison between CD8+ PD-1 negative and PD-1 positive cells
 Exploratory analysis of CD8+ PD-1 Neg and Pos T cells.
 Follow guided clustering tutorial https://satijalab.org/seurat/v3.2/neg_5393k_tutorial.html and this one https://scrnaseq-course.cog.sanger.ac.uk/website/seurat-chapter.html, and https://satijalab.org/seurat/v3.2/integration.html (standard workflow)
 
-## Patient 539 (test run)
+## All patients integrated (Harmony)
 
-### Load Cell Ranger output and create separate Seurat object for positive and negative
+### load Cell Ranger output
+
 ```{r}
 # Load dataset
 neg_539.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/539_PD1_Neg_filtered_feature_bc_matrix")
@@ -48,48 +50,79 @@ pos_539$pd1 <- "PD-1 Positive"
 # merge positive and negative
 p539 <- merge(neg_539, pos_539)
 
+
+# Load dataset
+neg_541.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/541_PD1_Neg_filtered_feature_bc_matrix")
+
+# Initialize the Seurat object with gene expression data not antibody capture
+neg_541 <- CreateSeuratObject(counts = neg_541.data$`Gene Expression`, project = "Patient 541", min.cells = 3, min.features = 200)
+
+neg_541$pd1 <- "PD-1 Negative"
+
+# Load dataset
+pos_541.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/541_PD1_Pos_filtered_feature_bc_matrix")
+
+# Initialize the Seurat object with gene expression data not antibody capture
+pos_541 <- CreateSeuratObject(counts = pos_541.data$`Gene Expression`, project = "Patient 541", min.cells = 3, min.features = 200)
+
+pos_541$pd1 <- "PD-1 Positive"
+
+# merge positive and negative
+p541 <- merge(neg_541, pos_541)
+
+# Load dataset
+neg_3228.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/3228_PD1N_filtered_feature_bc_matrix")
+
+# Initialize the Seurat object with gene expression data not antibody capture
+neg_3228 <- CreateSeuratObject(counts = neg_3228.data$`Gene Expression`, project = "Patient 3228", min.cells = 3, min.features = 200)
+
+neg_3228$pd1 <- "PD-1 Negative"
+
+# Load dataset
+pos_3228.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/3228_PD1P_filtered_feature_bc_matrix")
+
+# Initialize the Seurat object with gene expression data not antibody capture
+pos_3228 <- CreateSeuratObject(counts = pos_3228.data$`Gene Expression`, project = "Patient 3228", min.cells = 3, min.features = 200)
+
+pos_3228$pd1 <- "PD-1 Positive"
+
+# merge positive and negative
+p3228 <- merge(neg_3228, pos_3228)
+
+# merge all count matrices together for Harmony integration
+cd8 <- merge(p539, p541)
+
+cd8 <- merge(cd8, p3228)
+
+
 ```
 
 ### Pre-processing and normalisation
 ```{r, fig.height=4, fig.width=6}
-Idents(p539) <- "pd1"
-
-p539[["percent.mt"]] <- PercentageFeatureSet(p539, pattern = "^MT-")
-
-FeatureScatter(p539, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-
-VlnPlot(p539, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-
-p539 <- subset(p539, subset = nFeature_RNA > 200 & nFeature_RNA < 4500 & percent.mt < 5)
-
-p539 <- NormalizeData(p539, normalization.method = "LogNormalize", scale.factor = 10000, verbose=FALSE)
-
-
+Idents(cd8) <- "orig.ident"
+cd8[["percent.mt"]] <- PercentageFeatureSet(cd8, pattern = "^MT-")
+FeatureScatter(cd8, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+VlnPlot(cd8, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+cd8 <- subset(cd8, subset = nFeature_RNA > 200 & nFeature_RNA < 4500 & percent.mt < 10)
+cd8 <- NormalizeData(cd8, normalization.method = "LogNormalize", scale.factor = 10000, verbose=FALSE)
 ```
 
 ### Find variable features and scale data
 ```{r, fig.height=4, fig.width=14}
-p539 <- FindVariableFeatures(p539, selection.method = "vst", nfeatures = 2000, verbose=FALSE)
-
-p539 <- ScaleData(object = p539, vars.to.regress = c("nCount_RNA", "percent.mt"), verbose=FALSE)
-
-top10 <- head(VariableFeatures(p539), 10)
-
-plot1 <- VariableFeaturePlot(p539)
+cd8 <- FindVariableFeatures(cd8, selection.method = "vst", nfeatures = 2000, verbose=FALSE)
+cd8 <- ScaleData(object = cd8, vars.to.regress = c("nCount_RNA", "percent.mt"), verbose=FALSE)
+top10 <- head(VariableFeatures(cd8), 10)
+plot1 <- VariableFeaturePlot(cd8)
 plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
 plot1 + plot2
-
 ```
 
 ### Run PCA
 
 ```{r, fig.height=4, fig.width=6}
-p539 <- RunPCA(object = p539,  npcs = 30, verbose = FALSE)
-
+cd8 <- RunPCA(object = cd8,  npcs = 30, verbose = FALSE)
 # standard PCA plot
-DimPlot(object = p539, reduction = "pca")
-
-
+DimPlot(object = cd8, reduction = "pca")
 ```
 
 ### Determine statistically significant principal components
@@ -97,7 +130,7 @@ DimPlot(object = p539, reduction = "pca")
 ```{r, fig.height=4, fig.width=6}
 ## where is the elbow for the principal components?
   # Determine percent of variation associated with each PC
-  pct <- p539[["pca"]]@stdev / sum(p539[["pca"]]@stdev) * 100
+  pct <- cd8[["pca"]]@stdev / sum(cd8[["pca"]]@stdev) * 100
   # Calculate cumulative percents for each PC
   cumu <- cumsum(pct)
   # Determine which PC exhibits cumulative percent greater than 90% and % variation associated with the PC as less than 5
@@ -121,55 +154,129 @@ elbowplot_decision <- ggplot(plot_df, aes(cumu, pct, label = rank, color = rank 
     geom_vline(xintercept = 90, color = "grey") +
     geom_hline(yintercept = min(pct[pct > 0.05]), color = "grey") +
     theme_bw()
-
 elbowplot_decision
-
 ```
+
 
 ### Cell clustering and UMAP
 
-```{r, fig.height=6, fig.width=16}
+```{r, fig.height=12, fig.width=16}
 # calculate KNN and construct SNN graph (find neighbours), then find clusters
-p539 <- FindNeighbors(p539, dims = 1:16, verbose=FALSE)
-p539 <- FindClusters(p539, resolution = 0.4, verbose=FALSE)
-p539 <- RunUMAP(p539, dims = 1:16, verbose=FALSE)
-umap1 <- DimPlot(p539, reduction = "umap", group.by = "seurat_clusters", label=TRUE)  
-umap2 <- DimPlot(p539, reduction = "umap", group.by = "pd1")
-
-umap1 + umap2
+cd8 <- FindNeighbors(cd8, dims = 1:19, verbose=FALSE)
+cd8 <- FindClusters(cd8, resolution = 0.4, verbose=FALSE)
+cd8 <- RunUMAP(cd8, dims = 1:19, verbose=FALSE)
+umap1 <- DimPlot(cd8, reduction = "umap", group.by = "seurat_clusters", label=TRUE)  
+umap2 <- DimPlot(cd8, reduction = "umap", group.by = "pd1")
+umap3 <- DimPlot(cd8, reduction = "umap", group.by = "orig.ident")
+grid.arrange(umap1, umap2, umap3, nrow=2)
 ```
+
+
+### Integrate patients using Harmony (recommended by Adam)
+http://htmlpreview.github.io/?https://github.com/immunogenomics/harmony/blob/master/docs/SeuratV3.html
+IMPORTANT DIFFERENCE: In the Seurat integration tutorial, you need to define a Seurat object for each dataset. With Harmony integration, create only one Seurat object with all cells.
+
+The simplest way to run Harmony is to pass the Seurat object and specify which variable(s) to integrate out. RunHarmony returns a Seurat object, updated with the corrected Harmony coordinates. Let's set plot_convergence to TRUE, so we can make sure that the Harmony objective function gets better with each round.
+
+```{r, fig.height=4, fig.height=6}
+cd8 <- cd8 %>%
+    RunHarmony("orig.ident", plot_convergence = TRUE)
+# Harmony converged after 5 iterations
+# access Harmony embeddings - show top 5 rows and top 5 columns
+harmony_embeddings <- Embeddings(cd8, 'harmony')
+```
+
+```{r, fig.height=5, fig.width=12}
+p1 <- DimPlot(object = cd8, reduction = "harmony", group.by = "orig.ident")
+p2 <- VlnPlot(object = cd8, features = "harmony_1", group.by = "orig.ident", pt.size = .1)
+p1 + p2
+```
+```{r, fig.height=4, fig.width=12}
+p3 <- DimPlot(object = cd8, reduction = "pca", group.by="orig.ident")
+p3 + p1
+
+```
+
+Many downstream analyses are performed on low dimensional embeddings, not gene expression. To use the corrected Harmony embeddings rather than PCs, set reduction = 'harmony'. For example, let's perform the UMAP and Nearest Neighbor analyses using the Harmony embeddings.
+```{r, fig.height=10, fig.width=14}
+cd8 <- cd8 %>%
+    RunUMAP(reduction = "harmony", dims = 1:19, verbose=FALSE) %>%
+    FindNeighbors(reduction = "harmony", dims = 1:19, verbose=FALSE) %>%
+    FindClusters(resolution = 0.5, verbose=FALSE) %>%
+    identity()
+
+
+u1 <- DimPlot(cd8, reduction = "umap", group.by = "orig.ident")
+u2 <- DimPlot(cd8, reduction = "umap", group.by = "seurat_clusters", label=TRUE)
+u3 <- DimPlot(cd8, reduction = "umap", group.by = "pd1")
+
+grid.arrange(u2, u3, u1, nrow=2)
+
+Idents(cd8) <- "orig.ident"
+table(Idents(cd8))
+
+Idents(cd8) <- "pd1"
+table(Idents(cd8))
+
+Idents(cd8) <- "seurat_clusters"
+table(Idents(cd8))
+
+```
+
+```{r, fig.height=4, fig.width =6}
+FeaturePlot(object = cd8, features = c("PDCD1"), cols = c("grey", "blue"), reduction = "umap")
+```
+
 ### Find All Markers
 ```{r}
+# PD-1 negative vs PD-1 positive
 
-p539.markers <- FindAllMarkers(object = p539, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+Idents(cd8) <- "pd1"
 
+cd8.markers <- FindAllMarkers(object = cd8, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
 tmarkers <- read.csv("Markers_for_Ling.csv", header=F)
 
-# PD1 Neg
-cluster_0 <- p539.markers[p539.markers$cluster == "0", ]
-cluster_1 <- p539.markers[p539.markers$cluster == "1", ]
-cluster_2 <- p539.markers[p539.markers$cluster == "2", ]
-cluster_3 <- p539.markers[p539.markers$cluster == "3", ]
-cluster_4 <- p539.markers[p539.markers$cluster == "4", ]
-cluster_5 <- p539.markers[p539.markers$cluster == "5", ]
-cluster_6 <- p539.markers[p539.markers$cluster == "6", ]
-cluster_7 <- p539.markers[p539.markers$cluster == "7", ]
-cluster_8 <- p539.markers[p539.markers$cluster == "8", ]
-cluster_9 <- p539.markers[p539.markers$cluster == "9", ]
-cluster_10 <- p539.markers[p539.markers$cluster == "10", ]
+pd1n <- cd8.markers[cd8.markers$cluster == "PD-1 Negative", ]
+pd1p <- cd8.markers[cd8.markers$cluster == "PD-1 Positive", ]
 
-cluster_0 <- cluster_0[cluster_0$p_val_adj < 0.05,]
-cluster_1 <- cluster_1[cluster_1$p_val_adj < 0.05,]
-cluster_2 <- cluster_2[cluster_2$p_val_adj < 0.05,]
-cluster_3 <- cluster_3[cluster_3$p_val_adj < 0.05,]
-cluster_4 <- cluster_4[cluster_4$p_val_adj < 0.05,]
-cluster_5 <- cluster_5[cluster_5$p_val_adj < 0.05,]
-cluster_6 <- cluster_6[cluster_6$p_val_adj < 0.05,]
-cluster_7 <- cluster_7[cluster_7$p_val_adj < 0.05,]
-cluster_8 <- cluster_8[cluster_8$p_val_adj < 0.05,]
-cluster_9 <- cluster_9[cluster_9$p_val_adj < 0.05,]
-cluster_10 <- cluster_10[cluster_10$p_val_adj < 0.05,]
+pd1n <- pd1n[pd1n$p_val_adj < 0.05,]
+pd1p <- pd1p[pd1p$p_val_adj < 0.05,]
 
+pd1n_markers <- tmarkers[is.element(tmarkers$V1, pd1n$gene),]
+pd1p_markers <- tmarkers[is.element(tmarkers$V1, pd1p$gene),]
+
+# Clusters
+Idents(cd8) <- "seurat_clusters"
+
+cluster.markers <- FindAllMarkers(object = cd8, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+
+cluster_0 <- cluster.markers[cluster.markers$cluster == "0", ]
+cluster_1 <- cluster.markers[cluster.markers$cluster == "1", ]
+cluster_2 <- cluster.markers[cluster.markers$cluster == "2", ]
+cluster_3 <- cluster.markers[cluster.markers$cluster == "3", ]
+cluster_4 <- cluster.markers[cluster.markers$cluster == "4", ]
+cluster_5 <- cluster.markers[cluster.markers$cluster == "5", ]
+cluster_6 <- cluster.markers[cluster.markers$cluster == "6", ]
+cluster_7 <- cluster.markers[cluster.markers$cluster == "7", ]
+cluster_8 <- cluster.markers[cluster.markers$cluster == "8", ]
+cluster_9 <- cluster.markers[cluster.markers$cluster == "9", ]
+cluster_10 <- cluster.markers[cluster.markers$cluster == "10", ]
+cluster_11 <- cluster.markers[cluster.markers$cluster == "11", ]
+cluster_12 <- cluster.markers[cluster.markers$cluster == "12", ]
+
+cluster_0 <- cluster_0[1:50,]
+cluster_1 <- cluster_1[1:50,]
+cluster_2 <- cluster_2[1:50,]
+cluster_3 <- cluster_3[1:50,]
+cluster_4 <- cluster_4[1:50,]
+cluster_5 <- cluster_5[1:50,]
+cluster_6 <- cluster_6[1:50,]
+cluster_7 <- cluster_7[1:50,]
+cluster_8 <- cluster_8[1:50,]
+cluster_9 <- cluster_9[1:50,]
+cluster_10 <- cluster_10[1:50,]
+cluster_11 <- cluster_11[1:50,]
+cluster_12 <- cluster_12[1:50,]
 
 genes_0 <- tmarkers[is.element(tmarkers$V1, cluster_0$gene),]
 genes_1 <- tmarkers[is.element(tmarkers$V1, cluster_1$gene),]
@@ -182,84 +289,312 @@ genes_7 <- tmarkers[is.element(tmarkers$V1, cluster_7$gene),]
 genes_8 <- tmarkers[is.element(tmarkers$V1, cluster_8$gene),]
 genes_9 <- tmarkers[is.element(tmarkers$V1, cluster_9$gene),]
 genes_10 <- tmarkers[is.element(tmarkers$V1, cluster_10$gene),]
-
-
+genes_11 <- tmarkers[is.element(tmarkers$V1, cluster_11$gene),]
+genes_12 <- tmarkers[is.element(tmarkers$V1, cluster_12$gene),]
 
 ```
 ### Dot plots
 
 ```{r, fig.width=12, fig.height=10}
-Idents(p539) <- "seurat_clusters"
-p1 <- DotPlot(p539, features=c("PTPRC", "CCR7", "SELL", "TCF7", "IL7R", "S100A4"))
-Idents(p539) <- "pd1"
-p2 <- DotPlot(p539, features=c("PTPRC", "CCR7", "SELL", "TCF7", "IL7R", "S100A4"))
-
+Idents(cd8) <- "seurat_clusters"
+p1 <- DotPlot(cd8, features=c("PTPRC", "CCR7", "SELL", "TCF7", "IL7R", "S100A4"))
+Idents(cd8) <- "pd1"
+p2 <- DotPlot(cd8, features=c("PTPRC", "CCR7", "SELL", "TCF7", "IL7R", "S100A4"))
 grid.arrange(p1, p2, nrow=2)
 ```
 
 ```{r, fig.width=12, fig.height=10}
-Idents(p539) <- "seurat_clusters"
-p1 <- DotPlot(p539, features=c("CD44","CD27", "CD28", "CD69", "CD38","HLA-DRB1", "TUBA1B"))
-Idents(p539) <- "pd1"
-p2 <- DotPlot(p539, features=c("CD44","CD27", "CD28", "CD69", "CD38","HLA-DRB1", "TUBA1B"))
-
+Idents(cd8) <- "seurat_clusters"
+p1 <- DotPlot(cd8, features=c("CD44","CD27", "CD28", "CD69", "CD38","HLA-DRB1", "TUBA1B"))
+Idents(cd8) <- "pd1"
+p2 <- DotPlot(cd8, features=c("CD44","CD27", "CD28", "CD69", "CD38","HLA-DRB1", "TUBA1B"))
 grid.arrange(p1, p2, nrow=2)
 ```
 
 ```{r, fig.width=12, fig.height=10}
-Idents(p539) <- "seurat_clusters"
-p1 <- DotPlot(p539, features=c("GZMA", "GZMB", "GZMH", "GZMK", "PRF1", "GNLY","NKG7"))
-Idents(p539) <- "pd1"
-p2 <- DotPlot(p539, features=c("GZMA", "GZMB", "GZMH", "GZMK", "PRF1", "GNLY","NKG7"))
-
+Idents(cd8) <- "seurat_clusters"
+p1 <- DotPlot(cd8, features=c("GZMA", "GZMB", "GZMH", "GZMK", "PRF1", "GNLY","NKG7"))
+Idents(cd8) <- "pd1"
+p2 <- DotPlot(cd8, features=c("GZMA", "GZMB", "GZMH", "GZMK", "PRF1", "GNLY","NKG7"))
 grid.arrange(p1, p2, nrow=2)
 ```
 
 ```{r, fig.width=12, fig.height=10}
-Idents(p539) <- "seurat_clusters"
-p1 <- DotPlot(p539, features=c("IFNG", "TNF", "CCL4", "CCL5", "CCR4", "CXCR3", "CXCR4"))
-Idents(p539) <- "pd1"
-p2 <- DotPlot(p539, features=c("IFNG", "TNF", "CCL4", "CCL5", "CCR4", "CXCR3", "CXCR4"))
-
+Idents(cd8) <- "seurat_clusters"
+p1 <- DotPlot(cd8, features=c("IFNG", "TNF", "CCL4", "CCL5", "CCR4", "CXCR3", "CXCR4"))
+Idents(cd8) <- "pd1"
+p2 <- DotPlot(cd8, features=c("IFNG", "TNF", "CCL4", "CCL5", "CCR4", "CXCR3", "CXCR4"))
 grid.arrange(p1, p2, nrow=2)
 ```
 
 
 ```{r, fig.width=12, fig.height=10}
-Idents(p539) <- "seurat_clusters"
-p1 <- DotPlot(p539, features=c("SELPLG", "ITGA4", "ITGAL", "ITGB2", "ITGAE", "ICAM1"))
-Idents(p539) <- "pd1"
-p2 <- DotPlot(p539, features=c("SELPLG", "ITGA4", "ITGAL", "ITGB2", "ITGAE", "ICAM1"))
-
+Idents(cd8) <- "seurat_clusters"
+p1 <- DotPlot(cd8, features=c("SELPLG", "ITGA4", "ITGAL", "ITGB2", "ITGAE", "ICAM1"))
+Idents(cd8) <- "pd1"
+p2 <- DotPlot(cd8, features=c("SELPLG", "ITGA4", "ITGAL", "ITGB2", "ITGAE", "ICAM1"))
 grid.arrange(p1, p2, nrow=2)
 ```
 
 ```{r, fig.width=12, fig.height=10}
-Idents(p539) <- "seurat_clusters"
-p1 <- DotPlot(p539, features=c("CD300A", "CD96", "SIGIRR", "KLRC1", "KIR2DL3", "KIR3DL2", "LILRB1", "KLRB1"))
-Idents(p539) <- "pd1"
-p2 <- DotPlot(p539, features=c("CD300A", "CD96", "SIGIRR", "KLRC1", "KIR2DL3", "KIR3DL2", "LILRB1", "KLRB1"))
-
+Idents(cd8) <- "seurat_clusters"
+p1 <- DotPlot(cd8, features=c("CD300A", "CD96", "SIGIRR", "KLRC1", "KIR2DL3", "KIR3DL2", "LILRB1", "KLRB1"))
+Idents(cd8) <- "pd1"
+p2 <- DotPlot(cd8, features=c("CD300A", "CD96", "SIGIRR", "KLRC1", "KIR2DL3", "KIR3DL2", "LILRB1", "KLRB1"))
 grid.arrange(p1, p2, nrow=2)
 ```
 
 
 ```{r, fig.width=12, fig.height=10}
-Idents(p539) <- "seurat_clusters"
-p1 <- DotPlot(p539, features=c("NCR3", "NCR1", "KLRK1", "FCGR3A", "KIR2DS4", "KLRC2", "KLRC3"))
-Idents(p539) <- "pd1"
-p2 <- DotPlot(p539, features=c("NCR3", "NCR1", "KLRK1", "FCGR3A", "KIR2DS4", "KLRC2", "KLRC3"))
-
+Idents(cd8) <- "seurat_clusters"
+p1 <- DotPlot(cd8, features=c("NCR3", "NCR1", "KLRK1", "FCGR3A", "KIR2DS4", "KLRC2", "KLRC3"))
+Idents(cd8) <- "pd1"
+p2 <- DotPlot(cd8, features=c("NCR3", "NCR1", "KLRK1", "FCGR3A", "KIR2DS4", "KLRC2", "KLRC3"))
 grid.arrange(p1, p2, nrow=2)
 ```
 
 ```{r, fig.width=12, fig.height=10}
-Idents(p539) <- "seurat_clusters"
-p1 <- DotPlot(p539, features=c("KLRC1", "PDCD1", "CD200R1", "LAG3", "HAVCR2","CD160", "CTLA4", "BTLA", "TIGIT"))
-Idents(p539) <- "pd1"
-p2 <- DotPlot(p539, features=c("KLRC1", "PDCD1", "CD200R1", "LAG3", "HAVCR2","CD160", "CTLA4", "BTLA", "TIGIT"))
-
+Idents(cd8) <- "seurat_clusters"
+p1 <- DotPlot(cd8, features=c("KLRC1", "PDCD1", "CD200R1", "LAG3", "HAVCR2","CD160", "CTLA4", "BTLA", "TIGIT"))
+Idents(cd8) <- "pd1"
+p2 <- DotPlot(cd8, features=c("KLRC1", "PDCD1", "CD200R1", "LAG3", "HAVCR2","CD160", "CTLA4", "BTLA", "TIGIT"))
 grid.arrange(p1, p2, nrow=2)
+```
+
+
+## Patient 539 (test run)
+
+### Load Cell Ranger output 
+```{r}
+# # Load dataset
+# neg_539.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/539_PD1_Neg_filtered_feature_bc_matrix")
+# 
+# # Initialize the Seurat object with gene expression data not antibody capture
+# neg_539 <- CreateSeuratObject(counts = neg_539.data$`Gene Expression`, project = "Patient 539", min.cells = 3, min.features = 200)
+# 
+# neg_539$pd1 <- "PD-1 Negative"
+# 
+# # Load dataset
+# pos_539.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/539_PD1_Pos_filtered_feature_bc_matrix")
+# 
+# # Initialize the Seurat object with gene expression data not antibody capture
+# pos_539 <- CreateSeuratObject(counts = pos_539.data$`Gene Expression`, project = "Patient 539", min.cells = 3, min.features = 200)
+# 
+# pos_539$pd1 <- "PD-1 Positive"
+# 
+# # merge positive and negative
+# p539 <- merge(neg_539, pos_539)
+
+```
+
+### Pre-processing and normalisation
+```{r, fig.height=4, fig.width=6}
+# Idents(p539) <- "pd1"
+# 
+# p539[["percent.mt"]] <- PercentageFeatureSet(p539, pattern = "^MT-")
+# 
+# FeatureScatter(p539, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+# 
+# VlnPlot(p539, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+# 
+# p539 <- subset(p539, subset = nFeature_RNA > 200 & nFeature_RNA < 4500 & percent.mt < 5)
+# 
+# p539 <- NormalizeData(p539, normalization.method = "LogNormalize", scale.factor = 10000, verbose=FALSE)
+
+
+```
+
+### Find variable features and scale data
+```{r, fig.height=4, fig.width=14}
+# p539 <- FindVariableFeatures(p539, selection.method = "vst", nfeatures = 2000, verbose=FALSE)
+# 
+# p539 <- ScaleData(object = p539, vars.to.regress = c("nCount_RNA", "percent.mt"), verbose=FALSE)
+# 
+# top10 <- head(VariableFeatures(p539), 10)
+# 
+# plot1 <- VariableFeaturePlot(p539)
+# plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+# plot1 + plot2
+
+```
+
+### Run PCA
+
+```{r, fig.height=4, fig.width=6}
+# p539 <- RunPCA(object = p539,  npcs = 30, verbose = FALSE)
+# 
+# # standard PCA plot
+# DimPlot(object = p539, reduction = "pca")
+
+
+```
+
+### Determine statistically significant principal components
+
+```{r, fig.height=4, fig.width=6}
+# ## where is the elbow for the principal components?
+#   # Determine percent of variation associated with each PC
+#   pct <- p539[["pca"]]@stdev / sum(p539[["pca"]]@stdev) * 100
+#   # Calculate cumulative percents for each PC
+#   cumu <- cumsum(pct)
+#   # Determine which PC exhibits cumulative percent greater than 90% and % variation associated with the PC as less than 5
+#   co1 <- which(cumu > 90 & pct < 5)[1]
+#   message("Principal component which exhibits cumulative precent variation >90% AND % variation associated with the PC <5:")
+#   print(co1)
+#   # Determine the difference between variation of PC and subsequent PC
+#   co2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), decreasing = T)[1] + 1
+#   # last point where change of % of variation is more than 0.1%.
+#   message("Principal component where the % change in variation between consecutive PCs is <0.1%: ")
+#   print(co2)
+#   # Minimum of the two calculation
+#   pcs <- min(co1, co2)
+#   # Create a dataframe with values
+#   plot_df <- data.frame(pct = pct,
+#                         cumu = cumu,
+#                         rank = 1:length(pct))
+#   # Elbow plot to visualize
+# elbowplot_decision <- ggplot(plot_df, aes(cumu, pct, label = rank, color = rank > pcs)) +
+#     geom_text(size = 7.5) +
+#     geom_vline(xintercept = 90, color = "grey") +
+#     geom_hline(yintercept = min(pct[pct > 0.05]), color = "grey") +
+#     theme_bw()
+# 
+# elbowplot_decision
+
+```
+
+### Cell clustering and UMAP
+
+```{r, fig.height=6, fig.width=16}
+# # calculate KNN and construct SNN graph (find neighbours), then find clusters
+# p539 <- FindNeighbors(p539, dims = 1:16, verbose=FALSE)
+# p539 <- FindClusters(p539, resolution = 0.4, verbose=FALSE)
+# p539 <- RunUMAP(p539, dims = 1:16, verbose=FALSE)
+# umap1 <- DimPlot(p539, reduction = "umap", group.by = "seurat_clusters", label=TRUE)  
+# umap2 <- DimPlot(p539, reduction = "umap", group.by = "pd1")
+# 
+# umap1 + umap2
+```
+### Find All Markers
+```{r}
+
+# p539.markers <- FindAllMarkers(object = p539, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+# 
+# tmarkers <- read.csv("Markers_for_Ling.csv", header=F)
+# 
+# # PD1 Neg
+# cluster_0 <- p539.markers[p539.markers$cluster == "0", ]
+# cluster_1 <- p539.markers[p539.markers$cluster == "1", ]
+# cluster_2 <- p539.markers[p539.markers$cluster == "2", ]
+# cluster_3 <- p539.markers[p539.markers$cluster == "3", ]
+# cluster_4 <- p539.markers[p539.markers$cluster == "4", ]
+# cluster_5 <- p539.markers[p539.markers$cluster == "5", ]
+# cluster_6 <- p539.markers[p539.markers$cluster == "6", ]
+# cluster_7 <- p539.markers[p539.markers$cluster == "7", ]
+# cluster_8 <- p539.markers[p539.markers$cluster == "8", ]
+# cluster_9 <- p539.markers[p539.markers$cluster == "9", ]
+# cluster_10 <- p539.markers[p539.markers$cluster == "10", ]
+# 
+# cluster_0 <- cluster_0[cluster_0$p_val_adj < 0.05,]
+# cluster_1 <- cluster_1[cluster_1$p_val_adj < 0.05,]
+# cluster_2 <- cluster_2[cluster_2$p_val_adj < 0.05,]
+# cluster_3 <- cluster_3[cluster_3$p_val_adj < 0.05,]
+# cluster_4 <- cluster_4[cluster_4$p_val_adj < 0.05,]
+# cluster_5 <- cluster_5[cluster_5$p_val_adj < 0.05,]
+# cluster_6 <- cluster_6[cluster_6$p_val_adj < 0.05,]
+# cluster_7 <- cluster_7[cluster_7$p_val_adj < 0.05,]
+# cluster_8 <- cluster_8[cluster_8$p_val_adj < 0.05,]
+# cluster_9 <- cluster_9[cluster_9$p_val_adj < 0.05,]
+# cluster_10 <- cluster_10[cluster_10$p_val_adj < 0.05,]
+# 
+# 
+# genes_0 <- tmarkers[is.element(tmarkers$V1, cluster_0$gene),]
+# genes_1 <- tmarkers[is.element(tmarkers$V1, cluster_1$gene),]
+# genes_2 <- tmarkers[is.element(tmarkers$V1, cluster_2$gene),]
+# genes_3 <- tmarkers[is.element(tmarkers$V1, cluster_3$gene),]
+# genes_4 <- tmarkers[is.element(tmarkers$V1, cluster_4$gene),]
+# genes_5 <- tmarkers[is.element(tmarkers$V1, cluster_5$gene),]
+# genes_6 <- tmarkers[is.element(tmarkers$V1, cluster_6$gene),]
+# genes_7 <- tmarkers[is.element(tmarkers$V1, cluster_7$gene),]
+# genes_8 <- tmarkers[is.element(tmarkers$V1, cluster_8$gene),]
+# genes_9 <- tmarkers[is.element(tmarkers$V1, cluster_9$gene),]
+# genes_10 <- tmarkers[is.element(tmarkers$V1, cluster_10$gene),]
+
+```
+### Dot plots
+
+```{r, fig.width=12, fig.height=10}
+# Idents(p539) <- "seurat_clusters"
+# p1 <- DotPlot(p539, features=c("PTPRC", "CCR7", "SELL", "TCF7", "IL7R", "S100A4"))
+# Idents(p539) <- "pd1"
+# p2 <- DotPlot(p539, features=c("PTPRC", "CCR7", "SELL", "TCF7", "IL7R", "S100A4"))
+# 
+# grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+# Idents(p539) <- "seurat_clusters"
+# p1 <- DotPlot(p539, features=c("CD44","CD27", "CD28", "CD69", "CD38","HLA-DRB1", "TUBA1B"))
+# Idents(p539) <- "pd1"
+# p2 <- DotPlot(p539, features=c("CD44","CD27", "CD28", "CD69", "CD38","HLA-DRB1", "TUBA1B"))
+# 
+# grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+# Idents(p539) <- "seurat_clusters"
+# p1 <- DotPlot(p539, features=c("GZMA", "GZMB", "GZMH", "GZMK", "PRF1", "GNLY","NKG7"))
+# Idents(p539) <- "pd1"
+# p2 <- DotPlot(p539, features=c("GZMA", "GZMB", "GZMH", "GZMK", "PRF1", "GNLY","NKG7"))
+# 
+# grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+# Idents(p539) <- "seurat_clusters"
+# p1 <- DotPlot(p539, features=c("IFNG", "TNF", "CCL4", "CCL5", "CCR4", "CXCR3", "CXCR4"))
+# Idents(p539) <- "pd1"
+# p2 <- DotPlot(p539, features=c("IFNG", "TNF", "CCL4", "CCL5", "CCR4", "CXCR3", "CXCR4"))
+# 
+# grid.arrange(p1, p2, nrow=2)
+```
+
+
+```{r, fig.width=12, fig.height=10}
+# Idents(p539) <- "seurat_clusters"
+# p1 <- DotPlot(p539, features=c("SELPLG", "ITGA4", "ITGAL", "ITGB2", "ITGAE", "ICAM1"))
+# Idents(p539) <- "pd1"
+# p2 <- DotPlot(p539, features=c("SELPLG", "ITGA4", "ITGAL", "ITGB2", "ITGAE", "ICAM1"))
+# 
+# grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+# Idents(p539) <- "seurat_clusters"
+# p1 <- DotPlot(p539, features=c("CD300A", "CD96", "SIGIRR", "KLRC1", "KIR2DL3", "KIR3DL2", "LILRB1", "KLRB1"))
+# Idents(p539) <- "pd1"
+# p2 <- DotPlot(p539, features=c("CD300A", "CD96", "SIGIRR", "KLRC1", "KIR2DL3", "KIR3DL2", "LILRB1", "KLRB1"))
+# 
+# grid.arrange(p1, p2, nrow=2)
+```
+
+
+```{r, fig.width=12, fig.height=10}
+# Idents(p539) <- "seurat_clusters"
+# p1 <- DotPlot(p539, features=c("NCR3", "NCR1", "KLRK1", "FCGR3A", "KIR2DS4", "KLRC2", "KLRC3"))
+# Idents(p539) <- "pd1"
+# p2 <- DotPlot(p539, features=c("NCR3", "NCR1", "KLRK1", "FCGR3A", "KIR2DS4", "KLRC2", "KLRC3"))
+# 
+# grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+# Idents(p539) <- "seurat_clusters"
+# p1 <- DotPlot(p539, features=c("KLRC1", "PDCD1", "CD200R1", "LAG3", "HAVCR2","CD160", "CTLA4", "BTLA", "TIGIT"))
+# Idents(p539) <- "pd1"
+# p2 <- DotPlot(p539, features=c("KLRC1", "PDCD1", "CD200R1", "LAG3", "HAVCR2","CD160", "CTLA4", "BTLA", "TIGIT"))
+# 
+# grid.arrange(p1, p2, nrow=2)
 ```
 
 
