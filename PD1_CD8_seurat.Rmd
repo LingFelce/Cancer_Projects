@@ -1,5 +1,5 @@
 ---
-title: "Single-cell RNA-Seq analysis of CD8 PD-1 Neg or Pos cells"
+title: "Single-cell RNA-Seq analysis of CD8+ SARS-CoV-2 specific T cells"
 output:
   word_document: default
   html_document: default
@@ -18,21 +18,24 @@ library(cowplot)
 library(ggplot2)
 library(data.table)
 library(tidyverse)
+library(gridExtra)
 ```
 
-# Comparison between CD8+ PD-1 negative and PD-1 positive cells by patient
+# Comparison between CD8+ PD-1 negative and PD-1 positive cells
 Exploratory analysis of CD8+ PD-1 Neg and Pos T cells.
 Follow guided clustering tutorial https://satijalab.org/seurat/v3.2/neg_5393k_tutorial.html and this one https://scrnaseq-course.cog.sanger.ac.uk/website/seurat-chapter.html, and https://satijalab.org/seurat/v3.2/integration.html (standard workflow)
 
-## Patient 539
+## Patient 539 (test run)
 
 ### Load Cell Ranger output and create separate Seurat object for positive and negative
-```{r loading}
+```{r}
 # Load dataset
 neg_539.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/539_PD1_Neg_filtered_feature_bc_matrix")
 
 # Initialize the Seurat object with gene expression data not antibody capture
 neg_539 <- CreateSeuratObject(counts = neg_539.data$`Gene Expression`, project = "Patient 539", min.cells = 3, min.features = 200)
+
+neg_539$pd1 <- "PD-1 Negative"
 
 # Load dataset
 pos_539.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/539_PD1_Pos_filtered_feature_bc_matrix")
@@ -40,110 +43,120 @@ pos_539.data <- Read10X(data.dir = "/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-ce
 # Initialize the Seurat object with gene expression data not antibody capture
 pos_539 <- CreateSeuratObject(counts = pos_539.data$`Gene Expression`, project = "Patient 539", min.cells = 3, min.features = 200)
 
+pos_539$pd1 <- "PD-1 Positive"
+
+# merge positive and negative
+p539 <- merge(neg_539, pos_539)
+
 ```
 
 ### Pre-processing and normalisation
-```{r preprocessing}
-# PD1 Neg
-neg_539[["percent.mt"]] <- PercentageFeatureSet(neg_539, pattern = "^MT-")
+```{r, fig.height=4, fig.width=6}
+Idents(p539) <- "pd1"
 
-FeatureScatter(neg_539, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+p539[["percent.mt"]] <- PercentageFeatureSet(p539, pattern = "^MT-")
 
-neg_539 <- subset(neg_539, subset = nFeature_RNA > 200 & nFeature_RNA < 4500 & percent.mt < 5)
+FeatureScatter(p539, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 
-neg_539 <- NormalizeData(neg_539, normalization.method = "LogNormalize", scale.factor = 10000)
+VlnPlot(p539, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 
-# PD1 Pos
-pos_539[["percent.mt"]] <- PercentageFeatureSet(pos_539, pattern = "^MT-")
+p539 <- subset(p539, subset = nFeature_RNA > 200 & nFeature_RNA < 4500 & percent.mt < 5)
 
-FeatureScatter(pos_539, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+p539 <- NormalizeData(p539, normalization.method = "LogNormalize", scale.factor = 10000, verbose=FALSE)
 
-pos_539 <- subset(pos_539, subset = nFeature_RNA > 200 & nFeature_RNA < 4500 & percent.mt < 5)
-
-pos_539 <- NormalizeData(pos_539, normalization.method = "LogNormalize", scale.factor = 10000)
 
 ```
 
 ### Find variable features and scale data
-```{r variable features}
-neg_539 <- FindVariableFeatures(neg_539, selection.method = "vst", nfeatures = 2000)
-pos_539 <- FindVariableFeatures(pos_539, selection.method = "vst", nfeatures = 2000)
+```{r, fig.height=4, fig.width=14}
+p539 <- FindVariableFeatures(p539, selection.method = "vst", nfeatures = 2000, verbose=FALSE)
 
-neg_539 <- ScaleData(object = neg_539, vars.to.regress = c("nCount_RNA", "percent.mt"))
-pos_539 <- ScaleData(object = pos_539, vars.to.regress = c("nCount_RNA", "percent.mt"))
+p539 <- ScaleData(object = p539, vars.to.regress = c("nCount_RNA", "percent.mt"), verbose=FALSE)
+
+top10 <- head(VariableFeatures(p539), 10)
+
+plot1 <- VariableFeaturePlot(p539)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot1 + plot2
 
 ```
 
 ### Run PCA
 
-```{r pca}
-neg_539 <- RunPCA(object = neg_539,  npcs = 30, verbose = FALSE)
+```{r, fig.height=4, fig.width=6}
+p539 <- RunPCA(object = p539,  npcs = 30, verbose = FALSE)
 
 # standard PCA plot
-DimPlot(object = neg_539, reduction = "pca")
+DimPlot(object = p539, reduction = "pca")
 
-pos_539 <- RunPCA(object = pos_539,  npcs = 30, verbose = FALSE)
 
-# standard PCA plot
-DimPlot(object = pos_539, reduction = "pca")
 ```
 
 ### Determine statistically significant principal components
 
-```{r jackstraw, fig.height=4, fig.width=6}
-neg_539 <- JackStraw(neg_539, num.replicate = 100)
-neg_539 <- ScoreJackStraw(neg_539, dims = 1:20)
-JackStrawPlot(neg_539, dims = 1:20)
+```{r, fig.height=4, fig.width=6}
+## where is the elbow for the principal components?
+  # Determine percent of variation associated with each PC
+  pct <- p539[["pca"]]@stdev / sum(p539[["pca"]]@stdev) * 100
+  # Calculate cumulative percents for each PC
+  cumu <- cumsum(pct)
+  # Determine which PC exhibits cumulative percent greater than 90% and % variation associated with the PC as less than 5
+  co1 <- which(cumu > 90 & pct < 5)[1]
+  message("Principal component which exhibits cumulative precent variation >90% AND % variation associated with the PC <5:")
+  print(co1)
+  # Determine the difference between variation of PC and subsequent PC
+  co2 <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), decreasing = T)[1] + 1
+  # last point where change of % of variation is more than 0.1%.
+  message("Principal component where the % change in variation between consecutive PCs is <0.1%: ")
+  print(co2)
+  # Minimum of the two calculation
+  pcs <- min(co1, co2)
+  # Create a dataframe with values
+  plot_df <- data.frame(pct = pct,
+                        cumu = cumu,
+                        rank = 1:length(pct))
+  # Elbow plot to visualize
+elbowplot_decision <- ggplot(plot_df, aes(cumu, pct, label = rank, color = rank > pcs)) +
+    geom_text(size = 7.5) +
+    geom_vline(xintercept = 90, color = "grey") +
+    geom_hline(yintercept = min(pct[pct > 0.05]), color = "grey") +
+    theme_bw()
 
-pos_539 <- JackStraw(pos_539, num.replicate = 100)
-pos_539 <- ScoreJackStraw(pos_539, dims = 1:20)
-JackStrawPlot(pos_539, dims = 1:20)
+elbowplot_decision
 
 ```
 
 ### Cell clustering and UMAP
 
-```{r clustering, fig.height=6, fig.width=16}
+```{r, fig.height=6, fig.width=16}
 # calculate KNN and construct SNN graph (find neighbours), then find clusters
-neg_539 <- FindNeighbors(neg_539, dims = 1:20)
-neg_539 <- FindClusters(neg_539, resolution = 0.4)
-neg_539 <- RunUMAP(neg_539, dims = 1:20)
-UMAP_neg_cluster <- DimPlot(neg_539, reduction = "umap", group.by = "seurat_clusters") + ggtitle("Patient 539 PD-1 Neg") 
+p539 <- FindNeighbors(p539, dims = 1:16, verbose=FALSE)
+p539 <- FindClusters(p539, resolution = 0.4, verbose=FALSE)
+p539 <- RunUMAP(p539, dims = 1:16, verbose=FALSE)
+umap1 <- DimPlot(p539, reduction = "umap", group.by = "seurat_clusters", label=TRUE)  
+umap2 <- DimPlot(p539, reduction = "umap", group.by = "pd1")
 
-pos_539 <- FindNeighbors(pos_539, dims = 1:20)
-pos_539 <- FindClusters(pos_539, resolution = 0.4)
-pos_539 <- RunUMAP(pos_539, dims = 1:20)
-UMAP_pos_cluster <- DimPlot(pos_539, reduction = "umap", group.by = "seurat_clusters")  + ggtitle("Patient 539 PD-1 Pos")
-
-UMAP_neg_cluster + UMAP_pos_cluster
+umap1 + umap2
 ```
 ### Find All Markers
 ```{r}
-setwd('/t1-data/user/lfelce/scRNA-Seq/PD-1_CD8_T-cells/')
 
-neg_539.markers <- FindAllMarkers(object = neg_539, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
-write.csv (neg_539.markers, "neg_539_markers.csv")
+p539.markers <- FindAllMarkers(object = p539, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
 
-pos_539.markers <- FindAllMarkers(object = pos_539, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
-write.csv (pos_539.markers, "pos_539_markers.csv")
-
-```
-
-### Use Calli's list for cell annotation
-
-```{r calli's markers}
 tmarkers <- read.csv("Markers_for_Ling.csv", header=F)
 
 # PD1 Neg
-cluster_0 <- neg_539.markers[neg_539.markers$cluster == "0", ]
-cluster_1 <- neg_539.markers[neg_539.markers$cluster == "1", ]
-cluster_2 <- neg_539.markers[neg_539.markers$cluster == "2", ]
-cluster_3 <- neg_539.markers[neg_539.markers$cluster == "3", ]
-cluster_4 <- neg_539.markers[neg_539.markers$cluster == "4", ]
-cluster_5 <- neg_539.markers[neg_539.markers$cluster == "5", ]
-cluster_6 <- neg_539.markers[neg_539.markers$cluster == "6", ]
-cluster_7 <- neg_539.markers[neg_539.markers$cluster == "7", ]
-cluster_8 <- neg_539.markers[neg_539.markers$cluster == "8", ]
+cluster_0 <- p539.markers[p539.markers$cluster == "0", ]
+cluster_1 <- p539.markers[p539.markers$cluster == "1", ]
+cluster_2 <- p539.markers[p539.markers$cluster == "2", ]
+cluster_3 <- p539.markers[p539.markers$cluster == "3", ]
+cluster_4 <- p539.markers[p539.markers$cluster == "4", ]
+cluster_5 <- p539.markers[p539.markers$cluster == "5", ]
+cluster_6 <- p539.markers[p539.markers$cluster == "6", ]
+cluster_7 <- p539.markers[p539.markers$cluster == "7", ]
+cluster_8 <- p539.markers[p539.markers$cluster == "8", ]
+cluster_9 <- p539.markers[p539.markers$cluster == "9", ]
+cluster_10 <- p539.markers[p539.markers$cluster == "10", ]
 
 cluster_0 <- cluster_0[cluster_0$p_val_adj < 0.05,]
 cluster_1 <- cluster_1[cluster_1$p_val_adj < 0.05,]
@@ -154,6 +167,8 @@ cluster_5 <- cluster_5[cluster_5$p_val_adj < 0.05,]
 cluster_6 <- cluster_6[cluster_6$p_val_adj < 0.05,]
 cluster_7 <- cluster_7[cluster_7$p_val_adj < 0.05,]
 cluster_8 <- cluster_8[cluster_8$p_val_adj < 0.05,]
+cluster_9 <- cluster_9[cluster_9$p_val_adj < 0.05,]
+cluster_10 <- cluster_10[cluster_10$p_val_adj < 0.05,]
 
 
 genes_0 <- tmarkers[is.element(tmarkers$V1, cluster_0$gene),]
@@ -165,44 +180,98 @@ genes_5 <- tmarkers[is.element(tmarkers$V1, cluster_5$gene),]
 genes_6 <- tmarkers[is.element(tmarkers$V1, cluster_6$gene),]
 genes_7 <- tmarkers[is.element(tmarkers$V1, cluster_7$gene),]
 genes_8 <- tmarkers[is.element(tmarkers$V1, cluster_8$gene),]
+genes_9 <- tmarkers[is.element(tmarkers$V1, cluster_9$gene),]
+genes_10 <- tmarkers[is.element(tmarkers$V1, cluster_10$gene),]
 
-# PD1 Pos
 
+
+```
+### Dot plots
+
+```{r, fig.width=12, fig.height=10}
+Idents(p539) <- "seurat_clusters"
+p1 <- DotPlot(p539, features=c("PTPRC", "CCR7", "SELL", "TCF7", "IL7R", "S100A4"))
+Idents(p539) <- "pd1"
+p2 <- DotPlot(p539, features=c("PTPRC", "CCR7", "SELL", "TCF7", "IL7R", "S100A4"))
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+Idents(p539) <- "seurat_clusters"
+p1 <- DotPlot(p539, features=c("CD44","CD27", "CD28", "CD69", "CD38","HLA-DRB1", "TUBA1B"))
+Idents(p539) <- "pd1"
+p2 <- DotPlot(p539, features=c("CD44","CD27", "CD28", "CD69", "CD38","HLA-DRB1", "TUBA1B"))
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+Idents(p539) <- "seurat_clusters"
+p1 <- DotPlot(p539, features=c("GZMA", "GZMB", "GZMH", "GZMK", "PRF1", "GNLY","NKG7"))
+Idents(p539) <- "pd1"
+p2 <- DotPlot(p539, features=c("GZMA", "GZMB", "GZMH", "GZMK", "PRF1", "GNLY","NKG7"))
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+Idents(p539) <- "seurat_clusters"
+p1 <- DotPlot(p539, features=c("IFNG", "TNF", "CCL4", "CCL5", "CCR4", "CXCR3", "CXCR4"))
+Idents(p539) <- "pd1"
+p2 <- DotPlot(p539, features=c("IFNG", "TNF", "CCL4", "CCL5", "CCR4", "CXCR3", "CXCR4"))
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+
+```{r, fig.width=12, fig.height=10}
+Idents(p539) <- "seurat_clusters"
+p1 <- DotPlot(p539, features=c("SELPLG", "ITGA4", "ITGAL", "ITGB2", "ITGAE", "ICAM1"))
+Idents(p539) <- "pd1"
+p2 <- DotPlot(p539, features=c("SELPLG", "ITGA4", "ITGAL", "ITGB2", "ITGAE", "ICAM1"))
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+Idents(p539) <- "seurat_clusters"
+p1 <- DotPlot(p539, features=c("CD300A", "CD96", "SIGIRR", "KLRC1", "KIR2DL3", "KIR3DL2", "LILRB1", "KLRB1"))
+Idents(p539) <- "pd1"
+p2 <- DotPlot(p539, features=c("CD300A", "CD96", "SIGIRR", "KLRC1", "KIR2DL3", "KIR3DL2", "LILRB1", "KLRB1"))
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+
+```{r, fig.width=12, fig.height=10}
+Idents(p539) <- "seurat_clusters"
+p1 <- DotPlot(p539, features=c("NCR3", "NCR1", "KLRK1", "FCGR3A", "KIR2DS4", "KLRC2", "KLRC3"))
+Idents(p539) <- "pd1"
+p2 <- DotPlot(p539, features=c("NCR3", "NCR1", "KLRK1", "FCGR3A", "KIR2DS4", "KLRC2", "KLRC3"))
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+```{r, fig.width=12, fig.height=10}
+Idents(p539) <- "seurat_clusters"
+p1 <- DotPlot(p539, features=c("KLRC1", "PDCD1", "CD200R1", "LAG3", "HAVCR2","CD160", "CTLA4", "BTLA", "TIGIT"))
+Idents(p539) <- "pd1"
+p2 <- DotPlot(p539, features=c("KLRC1", "PDCD1", "CD200R1", "LAG3", "HAVCR2","CD160", "CTLA4", "BTLA", "TIGIT"))
+
+grid.arrange(p1, p2, nrow=2)
 ```
 
 
 
 
 
-### Find anchors and integrate
-
-```{r integrate}
-
-pancreas.anchors <- FindIntegrationAnchors(object.list = c(neg_539, pos_539), dims = 1:30)
-
-anchors.539 <- pancreas.anchors
-
-integrated.539 <- IntegrateData(anchorset = anchors.539, dims = 1:30)
-
-DefaultAssay(integrated.539) <- "integrated"
-
-# Run the standard workflow for visualization and clustering
-integrated.539 <- ScaleData(integrated.539, verbose = FALSE)
-integrated.539 <- RunPCA(integrated.539, npcs = 30, verbose = FALSE)
-integrated.539 <- RunUMAP(integrated.539, reduction = "pca", dims = 1:30)
-p1 <- DimPlot(integrated.539, reduction = "umap", group.by = "tech")
-p2 <- DimPlot(integrated.539, reduction = "umap", group.by = "celltype", label = TRUE, 
-    repel = TRUE) + NoLegend()
-p1 + p2
-
-```
 
 
-### Save
+## Save
 
 ```{r save}
-saveRDS(neg_539, file = "neg_539_seurat.rds")
-saveRDS(pos_539, file = "pos_539_seurat.rds")
+
 ```
 
 
