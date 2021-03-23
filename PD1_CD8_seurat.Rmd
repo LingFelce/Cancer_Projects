@@ -1,5 +1,5 @@
 ---
-title: "Single-cell RNA-Seq analysis of CD8+ SARS-CoV-2 specific T cells"
+title: "Single-cell RNA-Seq analysis of NSCLC CD8+ TILs"
 output:
   word_document: default
   html_document: default
@@ -223,8 +223,8 @@ table(Idents(cd8))
 
 ```
 
-```{r, fig.height=4, fig.width =6}
-FeaturePlot(object = cd8, features = c("PDCD1"), cols = c("grey", "blue"), reduction = "umap")
+```{r, fig.height=6, fig.width = 12}
+FeaturePlot(object = cd8, features = c("KLRC1", "PDCD1", "LAG3", "HAVCR2","CTLA4", "TIGIT"), cols = c("grey", "blue"), reduction = "umap", ncol=3)
 ```
 
 ### Find All Markers
@@ -293,6 +293,19 @@ genes_11 <- tmarkers[is.element(tmarkers$V1, cluster_11$gene),]
 genes_12 <- tmarkers[is.element(tmarkers$V1, cluster_12$gene),]
 
 ```
+
+### Heatmaps
+```{r, fig.wdith=5, fig.height=7}
+Idents(cd8) <- "pd1"
+top10 <- cd8.markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC)
+DoHeatmap(cd8, features = top10$gene) + NoLegend()
+```
+```{r, fig.width=12, fig.height=12}
+Idents(cd8) <- "seurat_clusters"
+top10 <- cluster.markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC)
+DoHeatmap(cd8, features = top10$gene) + NoLegend()
+```
+
 ### Dot plots
 
 ```{r, fig.width=12, fig.height=10}
