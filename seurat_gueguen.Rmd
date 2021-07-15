@@ -1,0 +1,546 @@
+---
+title: "Gueguen et al 2021 dataset"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Seurat)
+library(plyr)
+library(dplyr)
+library(patchwork)
+library(cowplot)
+library(ggplot2)
+library(data.table)
+library(tidyverse)
+library(harmony)
+library(org.Hs.eg.db)
+library(ggrepel)
+library(scater)
+library(tidyverse)
+library(cowplot)
+library(Matrix.utils)
+library(edgeR)
+library(magrittr)
+library(Matrix)
+library(purrr)
+library(reshape2)
+library(S4Vectors)
+library(tibble)
+library(SingleCellExperiment)
+library(pheatmap)
+# library(apeglm)
+library(png)
+library(DESeq2)
+library(RColorBrewer)
+library(clusterProfiler)
+library(sctransform)
+library(gridExtra)
+```
+
+
+Downloaded dataset from: https://ncbi.xyz/geo/query/acc.cgi?acc=GSE162500
+
+## Tumour infiltrating CD8+ lymphocytes in NSCLC: P58
+
+```{r}
+p58.counts <- Read10X("/stopgap/donglab/ling/R/megat/P58_Tumor_filtered_feature_bc_matrix") 
+p58 <- CreateSeuratObject(counts = p58.counts, min.cells = 3, min.features = 200, project = "P58 TILs", assay = "RNA")
+
+mito.genes <- grep(pattern = "^MT-", x = rownames(p58@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(p58@assays[["RNA"]][mito.genes, ])/Matrix::colSums(p58@assays[["RNA"]])
+p58 <- AddMetaData(object = p58, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = p58, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3)
+
+FeatureScatter(object=p58, feature1="nCount_RNA", feature2="nFeature_RNA")
+
+p58 <- subset(x = p58, subset = nFeature_RNA > 200 & nFeature_RNA < 4000 & percent.mito >  -Inf & percent.mito < 0.25 )
+
+p58 <- NormalizeData(object = p58, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Select the top 1000 most variable features
+p58 <- FindVariableFeatures(p58, selection.method = "mean.var.plot")
+
+# Scaling RNA data
+p58 <- ScaleData(p58, features = VariableFeatures(p58))
+
+# Run PCA
+p58 <- RunPCA(p58, features = VariableFeatures(p58))
+
+# Select top PCs for clustering
+p58 <- FindNeighbors(p58, reduction = "pca", dims = 1:30, verbose=FALSE)
+p58 <- FindClusters(p58, resolution = 0.5, verbose = FALSE)
+p58 <- RunUMAP(p58, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+umap_cluster <- DimPlot(p58, reduction="umap", group.by = "seurat_clusters")
+
+umap_cluster
+```
+
+## Tumour infiltrating CD8+ lymphocytes in NSCLC: P60
+
+```{r}
+p60.counts <- Read10X("/stopgap/donglab/ling/R/megat/P60_Tumor_filtered_feature_bc_matrix") 
+p60 <- CreateSeuratObject(counts = p60.counts, min.cells = 3, min.features = 200, project = "P60 TILs", assay = "RNA")
+
+mito.genes <- grep(pattern = "^MT-", x = rownames(p60@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(p60@assays[["RNA"]][mito.genes, ])/Matrix::colSums(p60@assays[["RNA"]])
+p60 <- AddMetaData(object = p60, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = p60, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3)
+
+FeatureScatter(object=p60, feature1="nCount_RNA", feature2="nFeature_RNA")
+
+p60 <- subset(x = p60, subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & percent.mito >  -Inf & percent.mito < 0.25 )
+
+p60 <- NormalizeData(object = p60, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Select the top 1000 most variable features
+p60 <- FindVariableFeatures(p60, selection.method = "mean.var.plot")
+
+# Scaling RNA data
+p60 <- ScaleData(p60, features = VariableFeatures(p60))
+
+# Run PCA
+p60 <- RunPCA(p60, features = VariableFeatures(p60))
+
+# Select top PCs for clustering
+p60 <- FindNeighbors(p60, reduction = "pca", dims = 1:30, verbose=FALSE)
+p60 <- FindClusters(p60, resolution = 0.5, verbose = FALSE)
+p60 <- RunUMAP(p60, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+umap_cluster <- DimPlot(p60, reduction="umap", group.by = "seurat_clusters")
+
+umap_cluster
+```
+
+## Tumour infiltrating CD8+ lymphocytes in NSCLC: P61
+
+```{r}
+p61.counts <- Read10X("/stopgap/donglab/ling/R/megat/P61_Tumor_filtered_feature_bc_matrix") 
+p61 <- CreateSeuratObject(counts = p61.counts, min.cells = 3, min.features = 200, project = "P61 TILs", assay = "RNA")
+
+mito.genes <- grep(pattern = "^MT-", x = rownames(p61@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(p61@assays[["RNA"]][mito.genes, ])/Matrix::colSums(p61@assays[["RNA"]])
+p61 <- AddMetaData(object = p61, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = p61, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3)
+
+FeatureScatter(object=p61, feature1="nCount_RNA", feature2="nFeature_RNA")
+
+p61 <- subset(x = p61, subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & percent.mito >  -Inf & percent.mito < 0.25 )
+
+p61 <- NormalizeData(object = p61, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Select the top 1000 most variable features
+p61 <- FindVariableFeatures(p61, selection.method = "mean.var.plot")
+
+# Scaling RNA data
+p61 <- ScaleData(p61, features = VariableFeatures(p61))
+
+# Run PCA
+p61 <- RunPCA(p61, features = VariableFeatures(p61))
+
+# Select top PCs for clustering
+p61 <- FindNeighbors(p61, reduction = "pca", dims = 1:30, verbose=FALSE)
+p61 <- FindClusters(p61, resolution = 0.5, verbose = FALSE)
+p61 <- RunUMAP(p61, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+umap_cluster <- DimPlot(p61, reduction="umap", group.by = "seurat_clusters")
+
+umap_cluster
+```
+
+## Integrating subsets
+```{r}
+tils <- merge(p58, y=c(p60, p61))
+
+tils <- NormalizeData(object = tils, normalization.method = "LogNormalize", scale.factor = 10000, verbose=FALSE)
+
+# Select the top 1000 most variable features
+tils <- FindVariableFeatures(tils, selection.method = "mean.var.plot", verbose=FALSE)
+
+# Scaling RNA data
+tils <- ScaleData(tils, features = VariableFeatures(tils), verbose=FALSE)
+
+# Run PCA
+tils <- RunPCA(tils, features = VariableFeatures(tils), verbose=FALSE)
+
+# Select top PCs for clustering
+tils <- FindNeighbors(tils, reduction = "pca", dims = 1:30, verbose=FALSE)
+tils <- FindClusters(tils, resolution = 0.5, verbose = FALSE)
+tils <- RunUMAP(tils, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+pca <- DimPlot(tils, reduction="pca", group.by="orig.ident")
+umap_cluster <- DimPlot(tils, reduction="umap", group.by = "seurat_clusters")
+umap_patient <- DimPlot(tils, reduction="umap", group.by = "orig.ident")
+
+grid.arrange(umap_cluster, umap_patient, pca, nrow=2)
+
+# which genes contribute to PCA loadings
+VizDimLoadings(tils, dims = 1:2, reduction = "pca")
+```
+
+### Harmony integration
+
+```{r}
+
+tils <- tils %>%
+    RunHarmony("orig.ident", plot_convergence = TRUE)
+
+harmony_embeddings <- Embeddings(tils, 'harmony')
+
+p1 <- DimPlot(object = tils, reduction = "harmony", group.by = "orig.ident")
+p2 <- VlnPlot(object = tils, features = "harmony_1", group.by = "orig.ident", pt.size = .1)
+p1 + p2
+
+p3 <- DimPlot(object = tils, reduction = "pca", group.by="orig.ident")
+p3 + p1
+
+tils <- tils %>%
+    RunUMAP(reduction = "harmony", dims = 1:20, verbose=FALSE) %>%
+    FindNeighbors(reduction = "harmony", dims = 1:20, verbose=FALSE) %>%
+    FindClusters(resolution = 0.4, verbose=FALSE) %>%
+    identity()
+
+ 
+p4 <- DimPlot(tils, reduction = "umap", group.by = "orig.ident")
+p5 <- DimPlot(tils, reduction = "umap", group.by = "seurat_clusters")
+
+p4 + p5
+
+```
+
+### Gene expression
+
+```{r}
+enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+FeaturePlot(tils, features=c("XCL1", "XCL2", "ITGB3", "ITGAE"))
+```
+
+## Paratumour CD8+ lymphocytes in NSCLC: P60
+
+```{r}
+p60.counts <- Read10X("/stopgap/donglab/ling/R/megat/P60_Juxta_ffiltered_feature_bc_matrix") 
+p60 <- CreateSeuratObject(counts = p60.counts, min.cells = 3, min.features = 200, project = "P60 Paratumour", assay = "RNA")
+
+mito.genes <- grep(pattern = "^MT-", x = rownames(p60@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(p60@assays[["RNA"]][mito.genes, ])/Matrix::colSums(p60@assays[["RNA"]])
+p60 <- AddMetaData(object = p60, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = p60, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3)
+
+FeatureScatter(object=p60, feature1="nCount_RNA", feature2="nFeature_RNA")
+
+p60 <- subset(x = p60, subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & percent.mito >  -Inf & percent.mito < 0.2 )
+
+p60 <- NormalizeData(object = p60, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Select the top 1000 most variable features
+p60 <- FindVariableFeatures(p60, selection.method = "mean.var.plot")
+
+# Scaling RNA data
+p60 <- ScaleData(p60, features = VariableFeatures(p60))
+
+# Run PCA
+p60 <- RunPCA(p60, features = VariableFeatures(p60))
+
+# Select top PCs for clustering
+p60 <- FindNeighbors(p60, reduction = "pca", dims = 1:30, verbose=FALSE)
+p60 <- FindClusters(p60, resolution = 0.5, verbose = FALSE)
+p60 <- RunUMAP(p60, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+umap_cluster <- DimPlot(p60, reduction="umap", group.by = "seurat_clusters")
+
+umap_cluster
+```
+
+## Paratumour CD8+ lymphocytes in NSCLC: P61
+
+```{r}
+p61.counts <- Read10X("/stopgap/donglab/ling/R/megat/P61_Juxta_filtered_feature_bc_matrix") 
+p61 <- CreateSeuratObject(counts = p61.counts, min.cells = 3, min.features = 200, project = "P61 Paratumour", assay = "RNA")
+
+mito.genes <- grep(pattern = "^MT-", x = rownames(p61@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(p61@assays[["RNA"]][mito.genes, ])/Matrix::colSums(p61@assays[["RNA"]])
+p61 <- AddMetaData(object = p61, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = p61, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3)
+
+FeatureScatter(object=p61, feature1="nCount_RNA", feature2="nFeature_RNA")
+
+p61 <- subset(x = p61, subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & percent.mito >  -Inf & percent.mito < 0.25 )
+
+p61 <- NormalizeData(object = p61, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Select the top 1000 most variable features
+p61 <- FindVariableFeatures(p61, selection.method = "mean.var.plot")
+
+# Scaling RNA data
+p61 <- ScaleData(p61, features = VariableFeatures(p61))
+
+# Run PCA
+p61 <- RunPCA(p61, features = VariableFeatures(p61))
+
+# Select top PCs for clustering
+p61 <- FindNeighbors(p61, reduction = "pca", dims = 1:30, verbose=FALSE)
+p61 <- FindClusters(p61, resolution = 0.5, verbose = FALSE)
+p61 <- RunUMAP(p61, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+umap_cluster <- DimPlot(p61, reduction="umap", group.by = "seurat_clusters")
+
+umap_cluster
+```
+
+## Integrating subsets
+```{r}
+para <- merge(p60, y=p61)
+
+para <- NormalizeData(object = para, normalization.method = "LogNormalize", scale.factor = 10000, verbose=FALSE)
+
+# Select the top 1000 most variable features
+para <- FindVariableFeatures(para, selection.method = "mean.var.plot", verbose=FALSE)
+
+# Scaling RNA data
+para <- ScaleData(para, features = VariableFeatures(para), verbose=FALSE)
+
+# Run PCA
+para <- RunPCA(para, features = VariableFeatures(para), verbose=FALSE)
+
+# Select top PCs for clustering
+para <- FindNeighbors(para, reduction = "pca", dims = 1:30, verbose=FALSE)
+para <- FindClusters(para, resolution = 0.5, verbose = FALSE)
+para <- RunUMAP(para, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+pca <- DimPlot(para, reduction="pca", group.by="orig.ident")
+umap_cluster <- DimPlot(para, reduction="umap", group.by = "seurat_clusters")
+umap_patient <- DimPlot(para, reduction="umap", group.by = "orig.ident")
+
+grid.arrange(umap_cluster, umap_patient, pca, nrow=2)
+
+# which genes contribute to PCA loadings
+VizDimLoadings(para, dims = 1:2, reduction = "pca")
+```
+
+### Harmony integration
+
+```{r}
+para <- para %>%
+    RunHarmony("orig.ident", plot_convergence = TRUE)
+
+harmony_embeddings <- Embeddings(para, 'harmony')
+
+p1 <- DimPlot(object = para, reduction = "harmony", group.by = "orig.ident")
+p2 <- VlnPlot(object = para, features = "harmony_1", group.by = "orig.ident", pt.size = .1)
+p1 + p2
+
+p3 <- DimPlot(object = para, reduction = "pca", group.by="orig.ident")
+p3 + p1
+
+para <- para %>%
+    RunUMAP(reduction = "harmony", dims = 1:20, verbose=FALSE) %>%
+    FindNeighbors(reduction = "harmony", dims = 1:20, verbose=FALSE) %>%
+    FindClusters(resolution = 0.4, verbose=FALSE) %>%
+    identity()
+
+ 
+p4 <- DimPlot(para, reduction = "umap", group.by = "orig.ident")
+p5 <- DimPlot(para, reduction = "umap", group.by = "seurat_clusters")
+
+p4 + p5
+
+```
+
+### Gene expression
+
+```{r}
+enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+FeaturePlot(para, features=c("XCL1", "XCL2", "ITGB3", "ITGAE"))
+```
+
+
+
+
+## PMBCs CD8+ lymphocytes in NSCLC: P58
+
+```{r}
+p58.counts <- Read10X("/stopgap/donglab/ling/R/megat/P58_Blood_filtered_feature_bc_matrix") 
+p58 <- CreateSeuratObject(counts = p58.counts, min.cells = 3, min.features = 200, project = "P58 PBMCs", assay = "RNA")
+
+mito.genes <- grep(pattern = "^MT-", x = rownames(p58@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(p58@assays[["RNA"]][mito.genes, ])/Matrix::colSums(p58@assays[["RNA"]])
+p58 <- AddMetaData(object = p58, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = p58, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3)
+
+FeatureScatter(object=p58, feature1="nCount_RNA", feature2="nFeature_RNA")
+
+p58 <- subset(x = p58, subset = nFeature_RNA > 200 & nFeature_RNA < 4000 & percent.mito >  -Inf & percent.mito < 0.2 )
+
+p58 <- NormalizeData(object = p58, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Select the top 1000 most variable features
+p58 <- FindVariableFeatures(p58, selection.method = "mean.var.plot")
+
+# Scaling RNA data
+p58 <- ScaleData(p58, features = VariableFeatures(p58))
+
+# Run PCA
+p58 <- RunPCA(p58, features = VariableFeatures(p58))
+
+# Select top PCs for clustering
+p58 <- FindNeighbors(p58, reduction = "pca", dims = 1:30, verbose=FALSE)
+p58 <- FindClusters(p58, resolution = 0.5, verbose = FALSE)
+p58 <- RunUMAP(p58, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+umap_cluster <- DimPlot(p58, reduction="umap", group.by = "seurat_clusters")
+
+umap_cluster
+```
+
+## PBMC CD8+ lymphocytes in NSCLC: P60
+
+```{r}
+p60.counts <- Read10X("/stopgap/donglab/ling/R/megat/P60_Blood_filtered_feature_bc_matrix") 
+p60 <- CreateSeuratObject(counts = p60.counts, min.cells = 3, min.features = 200, project = "P60 PBMCs", assay = "RNA")
+
+mito.genes <- grep(pattern = "^MT-", x = rownames(p60@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(p60@assays[["RNA"]][mito.genes, ])/Matrix::colSums(p60@assays[["RNA"]])
+p60 <- AddMetaData(object = p60, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = p60, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3)
+
+FeatureScatter(object=p60, feature1="nCount_RNA", feature2="nFeature_RNA")
+
+p60 <- subset(x = p60, subset = nFeature_RNA > 200 & nFeature_RNA < 4500 & percent.mito >  -Inf & percent.mito < 0.15 )
+
+p60 <- NormalizeData(object = p60, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Select the top 1000 most variable features
+p60 <- FindVariableFeatures(p60, selection.method = "mean.var.plot")
+
+# Scaling RNA data
+p60 <- ScaleData(p60, features = VariableFeatures(p60))
+
+# Run PCA
+p60 <- RunPCA(p60, features = VariableFeatures(p60))
+
+# Select top PCs for clustering
+p60 <- FindNeighbors(p60, reduction = "pca", dims = 1:30, verbose=FALSE)
+p60 <- FindClusters(p60, resolution = 0.5, verbose = FALSE)
+p60 <- RunUMAP(p60, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+umap_cluster <- DimPlot(p60, reduction="umap", group.by = "seurat_clusters")
+
+umap_cluster
+```
+
+## PBMCs CD8+ lymphocytes in NSCLC: P61
+
+```{r}
+p61.counts <- Read10X("/stopgap/donglab/ling/R/megat/P61_Blood_filtered_feature_bc_matrix") 
+p61 <- CreateSeuratObject(counts = p61.counts, min.cells = 3, min.features = 200, project = "P61 PBMCs", assay = "RNA")
+
+mito.genes <- grep(pattern = "^MT-", x = rownames(p61@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(p61@assays[["RNA"]][mito.genes, ])/Matrix::colSums(p61@assays[["RNA"]])
+p61 <- AddMetaData(object = p61, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = p61, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3)
+
+FeatureScatter(object=p61, feature1="nCount_RNA", feature2="nFeature_RNA")
+
+p61 <- subset(x = p61, subset = nFeature_RNA > 200 & nFeature_RNA < 4500 & percent.mito >  -Inf & percent.mito < 0.25 )
+
+p61 <- NormalizeData(object = p61, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Select the top 1000 most variable features
+p61 <- FindVariableFeatures(p61, selection.method = "mean.var.plot")
+
+# Scaling RNA data
+p61 <- ScaleData(p61, features = VariableFeatures(p61))
+
+# Run PCA
+p61 <- RunPCA(p61, features = VariableFeatures(p61))
+
+# Select top PCs for clustering
+p61 <- FindNeighbors(p61, reduction = "pca", dims = 1:30, verbose=FALSE)
+p61 <- FindClusters(p61, resolution = 0.5, verbose = FALSE)
+p61 <- RunUMAP(p61, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+umap_cluster <- DimPlot(p61, reduction="umap", group.by = "seurat_clusters")
+
+umap_cluster
+```
+
+## Integrating subsets
+```{r}
+pbmc <- merge(p58, y=c(p60, p61))
+
+pbmc <- NormalizeData(object = pbmc, normalization.method = "LogNormalize", scale.factor = 10000, verbose=FALSE)
+
+# Select the top 1000 most variable features
+pbmc <- FindVariableFeatures(pbmc, selection.method = "mean.var.plot", verbose=FALSE)
+
+# Scaling RNA data
+pbmc <- ScaleData(pbmc, features = VariableFeatures(pbmc), verbose=FALSE)
+
+# Run PCA
+pbmc <- RunPCA(pbmc, features = VariableFeatures(pbmc), verbose=FALSE)
+
+# Select top PCs for clustering
+pbmc <- FindNeighbors(pbmc, reduction = "pca", dims = 1:30, verbose=FALSE)
+pbmc <- FindClusters(pbmc, resolution = 0.5, verbose = FALSE)
+pbmc <- RunUMAP(pbmc, dims = 1:30, verbose=FALSE)
+
+# Projecting singlet identities on UMAP visualization
+pca <- DimPlot(pbmc, reduction="pca", group.by="orig.ident")
+umap_cluster <- DimPlot(pbmc, reduction="umap", group.by = "seurat_clusters")
+umap_patient <- DimPlot(pbmc, reduction="umap", group.by = "orig.ident")
+
+grid.arrange(umap_cluster, umap_patient, pca, nrow=2)
+
+# which genes contribute to PCA loadings
+VizDimLoadings(pbmc, dims = 1:2, reduction = "pca")
+```
+
+### Harmony integration
+
+```{r}
+pbmc <- pbmc %>%
+    RunHarmony("orig.ident", plot_convergence = TRUE)
+
+harmony_embeddings <- Embeddings(pbmc, 'harmony')
+
+p1 <- DimPlot(object = pbmc, reduction = "harmony", group.by = "orig.ident")
+p2 <- VlnPlot(object = pbmc, features = "harmony_1", group.by = "orig.ident", pt.size = .1)
+p1 + p2
+
+p3 <- DimPlot(object = pbmc, reduction = "pca", group.by="orig.ident")
+p3 + p1
+
+pbmc <- pbmc %>%
+    RunUMAP(reduction = "harmony", dims = 1:20, verbose=FALSE) %>%
+    FindNeighbors(reduction = "harmony", dims = 1:20, verbose=FALSE) %>%
+    FindClusters(resolution = 0.4, verbose=FALSE) %>%
+    identity()
+
+ 
+p4 <- DimPlot(pbmc, reduction = "umap", group.by = "orig.ident")
+p5 <- DimPlot(pbmc, reduction = "umap", group.by = "seurat_clusters")
+
+p4 + p5
+
+```
+
+### Gene expression
+
+```{r}
+enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+FeaturePlot(pbmc, features=c("XCL1", "XCL2", "ITGB3", "ITGAE"))
+```
+
+
+
