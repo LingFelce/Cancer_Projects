@@ -216,9 +216,23 @@ p4 + p5
 ### Gene expression
 
 ```{r}
-enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
 FeaturePlot(tils, features=c("XCL1", "XCL2", "ITGB3", "ITGAE"))
 ```
+### Enriched genes
+
+```{r}
+enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+
+tils <- AddModuleScore(object = tils,
+                      features = enriched, ctrl = 5,
+                      name = "enriched")
+
+FeaturePlot(tils, features=enriched[1:12,])
+
+FeaturePlot(tils, features="enriched1")
+```
+
+
 
 ## Paratumour CD8+ lymphocytes in NSCLC: P60
 
