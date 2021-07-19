@@ -13,6 +13,7 @@ colnames(all_genes) <- c("Protein_acronym",	"CD103+_SSX-2_T_cell_clone",
                      "CD103-_ESO-1_T_cell_clone")
 
 enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+key_genes <- c("ITGB3", "MTOR", "TGFB1", "AKT1", "PDK1", "PI3K")
 
 #-------------- Upregulated CD103+_SSX-2_T_cell_clone -------------------
 genes <- all_genes[,1:2]
@@ -38,24 +39,23 @@ ssx2 <- data.frame(x$ID, x$Description, x$p.adjust, x$geneID)
 # split genes for each Reactome pathway into separate row
 ssx2 <- ssx2 %>% mutate(x.geneID = strsplit(as.character(x.geneID), "/")) %>% unnest(x.geneID)
 
-# select only pathways which contain 105 enriched genes
-ssx2_enriched <- ssx2[ssx2$x.geneID %in% enriched$gene,]
+# select only pathways which key genes
+ssx2_enriched <- ssx2[ssx2$x.geneID %in% key_genes,]
 ssx2_enriched_pathways <- as.data.frame(table(ssx2_enriched$x.Description))
 colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 
-write.csv(ssx2, "upregulated_reactome_pathways_cd103_pos_ssx-2.csv", row.names=FALSE)
-write.csv(ssx2_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_ssx-2.csv", row.names=FALSE)
+# write.csv(ssx2, "upregulated_reactome_pathways_cd103_pos_ssx-2.csv", row.names=FALSE)
+# write.csv(ssx2_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_ssx-2.csv", row.names=FALSE)
 
-# 
-# logfc <- genes$`CD103+_SSX-2_T_cell_clone`
-# #set name of object
-# names(logfc) <- genes$Entrez.Gene
-# cnetplot(x, foldChange = logfc, 
-#          showCategory = c("Neutrophil degranulation",
-#                           "RAB GEFs exchange GTP for GDP on RABs",
-#                           "Antiviral mechanism by IFN-stimulated genes",
-#                           "TCR signaling",
-#                           ), circular = FALSE)
+write.csv(ssx2_enriched, "upregulated_pathways_key_genes_cd103_pos_ssx2_6h.csv",
+          row.names=FALSE)
+
+logfc <- genes$`CD103+_SSX-2_T_cell_clone`
+#set name of object
+names(logfc) <- genes$Entrez.Gene
+cnetplot(x, foldChange = logfc,
+         showCategory = c("Diseases of signal transduction",
+                          "Platelet activation, signaling and aggregation"), circular = FALSE)
 
 
 #---------------------- Upregulated CD103+_ESO-1_T_cell_clone --------------------
