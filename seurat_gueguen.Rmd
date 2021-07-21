@@ -253,9 +253,14 @@ Idents(tils) <- "enriched"
 
 enriched_markers <- FindMarkers(tils, ident.1="enriched", ident.2="not enriched")
 
+# re-scale data for heatmap
+tils <- ScaleData(tils, features = rownames(tils))
+
 sig <- enriched_markers[enriched_markers$p_val_adj < 0.05,]
 sig <- rownames_to_column(sig, var="gene")
-DoHeatmap(tils, features=sig$gene) + scale_fill_gradientn(colors = c("blue", "white", "red"))
+sig_enriched <- sig[sig$avg_log2FC>1,]
+DoHeatmap(tils, features=sig_enriched$gene) + scale_fill_gradientn(colors = c("blue", "white", "red"))
+DoHeatmap(tils, features=enriched$gene) + scale_fill_gradientn(colors = c("blue", "white", "red"))
 ```
 
 
