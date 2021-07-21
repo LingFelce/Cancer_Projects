@@ -97,13 +97,26 @@ eso1_enriched <- eso1[eso1$y.geneID %in% enriched$gene,]
 eso1_enriched_pathways <- as.data.frame(table(eso1_enriched$y.Description))
 colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
 
-write.csv(eso1, "upregulated_reactome_pathways_cd103_pos_eso-1.csv", row.names=FALSE)
-write.csv(eso1_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_eso-1.csv", row.names=FALSE)
+# write.csv(eso1, "upregulated_reactome_pathways_cd103_pos_eso-1.csv", row.names=FALSE)
+# write.csv(eso1_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_eso-1.csv", row.names=FALSE)
+
+write.csv(eso1_enriched, "upregulated_pathways_key_31_genes_cd103_pos_eso1_6h.csv",
+          row.names=FALSE)
+
+# shared enriched pathways between SSX-2 and ESO-1
+shared <- intersect(ssx2_enriched_pathways, eso1_enriched_pathways)
+top <- shared[shared$`No. of genes` > 2,]
+
+# logfc <- genes$`CD103+_SSX-2_T_cell_clone`
+# #set name of object
+# names(logfc) <- genes$Entrez.Gene
+# cnetplot(x, foldChange = logfc,
+#          showCategory = shared$Pathway, circular = FALSE)
 
 logfc <- genes$`CD103+_ESO-1_T_cell_clone`
 #set name of object
 names(logfc) <- genes$Entrez.Gene
-cnetplot(y, foldChange = logfc, showCategory = 15, circular = FALSE)
+cnetplot(y, foldChange = logfc, showCategory = top$Pathway, circular = FALSE)
 
 #----------------- Upregulated CD103- SSX-2 T cell clone -------------------
 
@@ -135,8 +148,9 @@ ssx2_enriched <- ssx2[ssx2$x.geneID %in% enriched$gene,]
 ssx2_enriched_pathways <- as.data.frame(table(ssx2_enriched$x.Description))
 colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 
-write.csv(ssx2, "upregulated_reactome_pathways_cd103_neg_ssx-2.csv", row.names=FALSE)
-write.csv(ssx2_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_neg_ssx-2.csv", row.names=FALSE)
+# write.csv(ssx2, "upregulated_reactome_pathways_cd103_neg_ssx-2.csv", row.names=FALSE)
+# write.csv(ssx2_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_neg_ssx-2.csv", row.names=FALSE)
+
 
 #---------------------- Upregulated CD103-_ESO-1_T_cell_clone --------------------
 genes <- all_genes[,c(1, 5)]
@@ -176,8 +190,11 @@ all_genes <- read.csv("/stopgap/donglab/ling/R/megat/all_genes_3h.csv")
 colnames(all_genes) <- c("Protein_acronym",	"CD103+_SSX-2_T_cell_clone",	
                          "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
                          "CD103-_ESO-1_T_cell_clone")
+# 105 genes
+# enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
 
-enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+# list of 31 enriched proteins
+enriched <- read.csv("/stopgap/donglab/ling/R/megat/enriched_31_proteins.csv")
 
 #-------------- Upregulated CD103+_SSX-2_T_cell_clone -------------------
 genes <- all_genes[,1:2]
@@ -208,9 +225,11 @@ ssx2_enriched <- ssx2[ssx2$x.geneID %in% enriched$gene,]
 ssx2_enriched_pathways <- as.data.frame(table(ssx2_enriched$x.Description))
 colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 
-write.csv(ssx2, "upregulated_reactome_pathways_cd103_pos_ssx-2_3h.csv", row.names=FALSE)
-write.csv(ssx2_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_ssx-2_3h.csv", row.names=FALSE)
+# write.csv(ssx2, "upregulated_reactome_pathways_cd103_pos_ssx-2_3h.csv", row.names=FALSE)
+# write.csv(ssx2_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_ssx-2_3h.csv", row.names=FALSE)
 
+write.csv(ssx2_enriched, "upregulated_pathways_key_31_genes_cd103_pos_ssx2_3h.csv",
+          row.names=FALSE)
 
 #---------------------- Upregulated CD103+_ESO-1_T_cell_clone --------------------
 genes <- all_genes[,c(1, 4)]
@@ -241,10 +260,11 @@ eso1_enriched <- eso1[eso1$y.geneID %in% enriched$gene,]
 eso1_enriched_pathways <- as.data.frame(table(eso1_enriched$y.Description))
 colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
 
-write.csv(eso1, "upregulated_reactome_pathways_cd103_pos_eso-1_3h.csv", row.names=FALSE)
-write.csv(eso1_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_eso-1_3h.csv", row.names=FALSE)
+# write.csv(eso1, "upregulated_reactome_pathways_cd103_pos_eso-1_3h.csv", row.names=FALSE)
+# write.csv(eso1_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_eso-1_3h.csv", row.names=FALSE)
 
-
+write.csv(eso1_enriched, "upregulated_pathways_key_31_genes_cd103_pos_eso1_3h.csv",
+          row.names=FALSE)
 
 #----------------- Upregulated CD103- SSX-2 T cell clone -------------------
 
