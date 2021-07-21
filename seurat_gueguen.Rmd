@@ -211,6 +211,11 @@ p5 <- DimPlot(tils, reduction = "umap", group.by = "seurat_clusters")
 
 p4 + p5
 
+Idents(tils) <- "seurat_clusters"
+all_markers <- FindAllMarkers(tils)
+
+saveRDS(tils, "seurat_gueguen_harmony.rds")
+
 ```
 
 ### Gene expression
@@ -220,8 +225,8 @@ FeaturePlot(tils, features=c("XCL1", "XCL2", "ITGB3", "ITGAE"))
 ```
 ### Enriched genes
 
-```{r}
-enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+```{r, fig.height=30, fig.width=20}
+enriched <- read.csv("/stopgap/donglab/ling/R/megat/enriched_31_proteins.csv")
 
 tils <- AddModuleScore(object = tils,
                       features = enriched, ctrl = 5,
@@ -229,7 +234,28 @@ tils <- AddModuleScore(object = tils,
 
 FeaturePlot(tils, features=enriched[1:12,])
 
-FeaturePlot(tils, features="enriched1")
+FeaturePlot(tils, features="enriched1") + 
+    scale_colour_gradientn(colours = c("white", "grey", "blue"))
+
+# any cell with score 0.5 or above, annotate as enriched
+
+metadata <- tils@meta.data
+
+ggplot(metadata, aes(x=metadata$enriched1)) + geom_density()
+
+metadata$enriched <- ifelse(metadata$enriched1 > 0.25, "enriched", "not enriched")
+table(metadata$enriched)
+
+tils$enriched <- metadata$enriched
+
+DefaultAssay(tils) <- "RNA"
+Idents(tils) <- "enriched"
+
+enriched_markers <- FindMarkers(tils, ident.1="enriched", ident.2="not enriched")
+
+sig <- enriched_markers[enriched_markers$p_val_adj < 0.05,]
+sig <- rownames_to_column(sig, var="gene")
+DoHeatmap(tils, features=sig$gene) + scale_fill_gradientn(colors = c("blue", "white", "red"))
 ```
 
 
