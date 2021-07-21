@@ -55,17 +55,6 @@ colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 write.csv(ssx2_enriched, "upregulated_pathways_key_31_genes_cd103_pos_ssx2_6h.csv",
           row.names=FALSE)
 
-logfc <- genes$`CD103+_SSX-2_T_cell_clone`
-#set name of object
-names(logfc) <- genes$Entrez.Gene
-cnetplot(x, foldChange = logfc,
-         showCategory = c("Diseases of signal transduction",
-                          "Signaling by Interleukins",
-                          "Platelet activation, signaling and aggregation",
-                          "Infectious disease",
-                          "Oncogenic MAPK signaling",
-                          "Signaling by BRAF and RAF fusions",
-                          "Integrin alphaIIb beta3 signaling"), circular = FALSE)
 
 
 #---------------------- Upregulated CD103+_ESO-1_T_cell_clone --------------------
@@ -113,10 +102,23 @@ top <- shared[shared$`No. of genes` > 2,]
 # cnetplot(x, foldChange = logfc,
 #          showCategory = shared$Pathway, circular = FALSE)
 
-logfc <- genes$`CD103+_ESO-1_T_cell_clone`
+eso1_enriched_genes <- genes[genes$Protein_acronym %in% enriched$gene,]
+
+logfc <- eso1_enriched_genes$`CD103+_ESO-1_T_cell_clone`
 #set name of object
-names(logfc) <- genes$Entrez.Gene
-cnetplot(y, foldChange = logfc, showCategory = top$Pathway, circular = FALSE)
+names(logfc) <- eso1_enriched_genes$Entrez.Gene
+cnetplot(y, foldChange = logfc, 
+         showCategory = c("Diseases of signal transduction",
+                          "GRB2:SOS provides linkage to MAPK signaling for Integrins",
+                          "HIV Infection",
+                          "Infectious disease",
+                          "Integrin alphaIIb beta3 signaling",
+                          "Integrin signaling",
+                          "Oncogenic MAPK signaling",
+                          "p130Cas linkage to MAPK signaling for integrins",
+                          "Platelet activation, signaling and aggregation",
+                          "Signaling by BRAF and RAF fusions",
+                          "Signaling by high-kinase activity BRAF mutants"), circular = FALSE)
 
 #----------------- Upregulated CD103- SSX-2 T cell clone -------------------
 
@@ -265,6 +267,26 @@ colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
 
 write.csv(eso1_enriched, "upregulated_pathways_key_31_genes_cd103_pos_eso1_3h.csv",
           row.names=FALSE)
+
+# shared enriched pathways between SSX-2 and ESO-1
+shared <- intersect(ssx2_enriched_pathways, eso1_enriched_pathways)
+top <- shared[shared$`No. of genes` > 1,]
+
+# logfc <- genes$`CD103+_SSX-2_T_cell_clone`
+# #set name of object
+# names(logfc) <- genes$Entrez.Gene
+# cnetplot(x, foldChange = logfc,
+#          showCategory = shared$Pathway, circular = FALSE)
+
+eso1_enriched_genes <- genes[genes$Protein_acronym %in% enriched$gene,]
+
+logfc <- eso1_enriched_genes$`CD103+_ESO-1_T_cell_clone`
+#set name of object
+names(logfc) <- eso1_enriched_genes$Entrez.Gene
+cnetplot(y, foldChange = logfc, showCategory = c("Fc epsilon receptor (FCERI) signaling",
+                                                 "HIV Infection",
+                                                 "Infectious disease",
+                                                 "Neutrophil degranulation"), circular = FALSE)
 
 #----------------- Upregulated CD103- SSX-2 T cell clone -------------------
 
