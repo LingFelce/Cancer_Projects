@@ -36,6 +36,7 @@ library(RColorBrewer)
 library(clusterProfiler)
 library(sctransform)
 library(gridExtra)
+library(ReactomePA)
 ```
 
 
@@ -225,8 +226,9 @@ FeaturePlot(tils, features=c("XCL1", "XCL2", "ITGB3", "ITGAE"))
 ```
 ### Enriched genes
 
-```{r, fig.height=30, fig.width=20}
+```{r}
 enriched <- read.csv("/stopgap/donglab/ling/R/megat/enriched_31_proteins.csv")
+tils <- readRDS("/stopgap/donglab/ling/R/megat/seurat_gueguen_harmony.rds")
 
 tils <- AddModuleScore(object = tils,
                       features = enriched, ctrl = 5,
@@ -261,6 +263,49 @@ sig <- rownames_to_column(sig, var="gene")
 sig_enriched <- sig[sig$avg_log2FC>1,]
 DoHeatmap(tils, features=sig_enriched$gene) + scale_fill_gradientn(colors = c("blue", "white", "red"))
 DoHeatmap(tils, features=enriched$gene) + scale_fill_gradientn(colors = c("blue", "white", "red"))
+```
+### Reactome pathway analysis
+```{r}
+genes <- sig[sig$avg_log2FC > 0,]
+
+genes$Entrez.Gene <- mapIds(org.Hs.eg.db, keys=as.character(genes$gene), keytype="SYMBOL", column="ENTREZID")
+# Keep only rows from table without NAs
+genes <- genes[is.na(genes$Entrez.Gene)==FALSE,]
+# Remove duplicated entries
+genes <- genes[!duplicated(genes$Entrez.Gene),]
+
+# Change Entrez IDs from numbers to characters
+geneset <- as.character(genes$Entrez.Gene)
+
+# Reactome over-representation test
+x <- enrichPathway(gene=geneset, pvalueCutoff = 0.01, qvalueCutoff = 0.05, readable=TRUE)
+
+dim(x)
+
+reactome <- data.frame(x$ID, x$Description, x$p.adjust, x$geneID)
+
+# split genes for each Reactome pathway into separate row
+reactome <- reactome %>% mutate(x.geneID = strsplit(as.character(x.geneID), "/")) %>% unnest(x.geneID)
+
+# 105 enriched proteins
+enriched_105 <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+
+# select only pathways which key genes
+reactome_enriched <- reactome[reactome$x.geneID %in% enriched_105$gene,]
+reactome_enriched_pathways <- as.data.frame(table(reactome_enriched$x.Description))
+colnames(reactome_enriched_pathways) <- c("Pathway","Number")
+
+reactome_enriched_pathways <- reactome_enriched_pathways[order(-reactome_enriched_pathways$Number),]
+pathways <- as.character(reactome_enriched_pathways$Pathway)
+
+# colour genes if on enriched list 
+reactome_enriched_genes <- genes[genes$gene %in% enriched_105$gene,]
+logfc <- reactome_enriched_genes$avg_log2FC
+names(logfc) <- reactome_enriched_genes$Entrez.Gene
+
+cnetplot(x, foldChange = logfc, showCategory = pathways[1:5], circular = FALSE)
+
+write.csv(reactome_enriched, "/stopgap/donglab/ling/R/megat/gueguen_upregulated_reactome_105_enriched_pathways.csv")
 ```
 
 
