@@ -14,11 +14,11 @@ colnames(all_genes) <- c("Protein_acronym",	"CD103+_SSX-2_T_cell_clone",
                      "CD103-_ESO-1_T_cell_clone")
 
 # list of 105 enriched proteins
-# enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+enriched <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
 # key_genes <- c("ITGB3", "MTOR", "TGFB1", "AKT1", "PDK1", "PI3K")
 
 # list of 31 enriched proteins
-enriched <- read.csv("/stopgap/donglab/ling/R/megat/enriched_31_proteins.csv")
+# enriched <- read.csv("/stopgap/donglab/ling/R/megat/enriched_31_proteins.csv")
 
 #-------------- Upregulated CD103+_SSX-2_T_cell_clone -------------------
 genes <- all_genes[,1:2]
@@ -52,7 +52,10 @@ colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 # write.csv(ssx2, "upregulated_reactome_pathways_cd103_pos_ssx-2.csv", row.names=FALSE)
 # write.csv(ssx2_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_ssx-2.csv", row.names=FALSE)
 
-write.csv(ssx2_enriched, "upregulated_pathways_key_31_genes_cd103_pos_ssx2_6h.csv",
+# write.csv(ssx2_enriched, "upregulated_pathways_key_31_genes_cd103_pos_ssx2_6h.csv",
+#           row.names=FALSE)
+
+write.csv(ssx2_enriched, "upregulated_pathways_key_105_genes_cd103_pos_ssx2_6h.csv",
           row.names=FALSE)
 
 
@@ -89,36 +92,12 @@ colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
 # write.csv(eso1, "upregulated_reactome_pathways_cd103_pos_eso-1.csv", row.names=FALSE)
 # write.csv(eso1_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_eso-1.csv", row.names=FALSE)
 
-write.csv(eso1_enriched, "upregulated_pathways_key_31_genes_cd103_pos_eso1_6h.csv",
+# write.csv(eso1_enriched, "upregulated_pathways_key_31_genes_cd103_pos_eso1_6h.csv",
+#           row.names=FALSE)
+
+write.csv(eso1_enriched, "upregulated_pathways_key_105_genes_cd103_pos_eso1_6h.csv",
           row.names=FALSE)
 
-# shared enriched pathways between SSX-2 and ESO-1
-shared <- intersect(ssx2_enriched_pathways, eso1_enriched_pathways)
-top <- shared[shared$`No. of genes` > 2,]
-
-# logfc <- genes$`CD103+_SSX-2_T_cell_clone`
-# #set name of object
-# names(logfc) <- genes$Entrez.Gene
-# cnetplot(x, foldChange = logfc,
-#          showCategory = shared$Pathway, circular = FALSE)
-
-eso1_enriched_genes <- genes[genes$Protein_acronym %in% enriched$gene,]
-
-logfc <- eso1_enriched_genes$`CD103+_ESO-1_T_cell_clone`
-#set name of object
-names(logfc) <- eso1_enriched_genes$Entrez.Gene
-cnetplot(y, foldChange = logfc, 
-         showCategory = c("Diseases of signal transduction",
-                          "GRB2:SOS provides linkage to MAPK signaling for Integrins",
-                          "HIV Infection",
-                          "Infectious disease",
-                          "Integrin alphaIIb beta3 signaling",
-                          "Integrin signaling",
-                          "Oncogenic MAPK signaling",
-                          "p130Cas linkage to MAPK signaling for integrins",
-                          "Platelet activation, signaling and aggregation",
-                          "Signaling by BRAF and RAF fusions",
-                          "Signaling by high-kinase activity BRAF mutants"), circular = FALSE)
 
 #----------------- Upregulated CD103- SSX-2 T cell clone -------------------
 
@@ -153,38 +132,60 @@ colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 # write.csv(ssx2, "upregulated_reactome_pathways_cd103_neg_ssx-2.csv", row.names=FALSE)
 # write.csv(ssx2_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_neg_ssx-2.csv", row.names=FALSE)
 
+cd103_neg <- ssx2_enriched
 
 #---------------------- Upregulated CD103-_ESO-1_T_cell_clone --------------------
-genes <- all_genes[,c(1, 5)]
+# genes <- all_genes[,c(1, 5)]
+# 
+# genes <- genes[genes$`CD103-_ESO-1_T_cell_clone` > 0,]
+# 
+# genes$Entrez.Gene <- mapIds(org.Hs.eg.db, keys=as.character(genes$Protein_acronym), keytype="SYMBOL", column="ENTREZID")
+# # Keep only rows from table without NAs
+# genes <- genes[is.na(genes$Entrez.Gene)==FALSE,]
+# # Remove duplicated entries
+# genes <- genes[!duplicated(genes$Entrez.Gene),]
+# 
+# # Change Entrez IDs from numbers to characters
+# geneset <- as.character(genes$Entrez.Gene)
+# 
+# # Reactome over-representation test
+# y <- enrichPathway(gene=geneset, pvalueCutoff = 0.01, qvalueCutoff = 0.05, readable=TRUE)
+# 
+# dim(y)
+# 
+# eso1 <- data.frame(y$ID, y$Description, y$p.adjust, y$geneID)
+# 
+# # split genes for each Reactome pathway into separate row
+# eso1 <- eso1 %>% mutate(y.geneID = strsplit(as.character(y.geneID), "/")) %>% unnest(y.geneID)
+# 
+# # select only pathways which contain 105 enriched genes
+# eso1_enriched <- eso1[eso1$y.geneID %in% enriched$gene,]
+# eso1_enriched_pathways <- as.data.frame(table(eso1_enriched$y.Description))
+# colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
+# 
+# write.csv(eso1, "upregulated_reactome_pathways_cd103_neg_eso-1.csv", row.names=FALSE)
+# # write.csv(eso1_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_eso-1.csv", row.names=FALSE)
+# 
 
-genes <- genes[genes$`CD103-_ESO-1_T_cell_clone` > 0,]
 
-genes$Entrez.Gene <- mapIds(org.Hs.eg.db, keys=as.character(genes$Protein_acronym), keytype="SYMBOL", column="ENTREZID")
-# Keep only rows from table without NAs
-genes <- genes[is.na(genes$Entrez.Gene)==FALSE,]
-# Remove duplicated entries
-genes <- genes[!duplicated(genes$Entrez.Gene),]
+#------ shared 6 hour enriched pathways -------
 
-# Change Entrez IDs from numbers to characters
-geneset <- as.character(genes$Entrez.Gene)
+# shared enriched pathways between SSX-2 and ESO-1 6h
+shared <- intersect(ssx2_enriched_pathways, eso1_enriched_pathways)
+top <- shared[shared$`No. of genes` > 2,]
 
-# Reactome over-representation test
-y <- enrichPathway(gene=geneset, pvalueCutoff = 0.01, qvalueCutoff = 0.05, readable=TRUE)
+# remove SSX2 CD103- pathway (need to run SSX2 CD103- chunk above)
+top <- top[!top$Pathway %in% cd103_neg$x.Description,]
 
-dim(y)
 
-eso1 <- data.frame(y$ID, y$Description, y$p.adjust, y$geneID)
+# colour genes if on enriched list (SSX2)
+ssx2_enriched_genes <- genes[genes$Protein_acronym %in% enriched$gene,]
+logfc <- ssx2_enriched_genes$`CD103+_SSX-2_T_cell_clone`
+names(logfc) <- ssx2_enriched_genes$Entrez.Gene
 
-# split genes for each Reactome pathway into separate row
-eso1 <- eso1 %>% mutate(y.geneID = strsplit(as.character(y.geneID), "/")) %>% unnest(y.geneID)
+pathways <- as.character(top$Pathway)
+cnetplot(y, foldChange = logfc, showCategory = pathways, circular = FALSE)
 
-# select only pathways which contain 105 enriched genes
-eso1_enriched <- eso1[eso1$y.geneID %in% enriched$gene,]
-eso1_enriched_pathways <- as.data.frame(table(eso1_enriched$y.Description))
-colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
-
-write.csv(eso1, "upregulated_reactome_pathways_cd103_neg_eso-1.csv", row.names=FALSE)
-# write.csv(eso1_enriched_pathways, "upregulated_enriched_reactome_pathways_cd103_pos_eso-1.csv", row.names=FALSE)
 
 #------- 3 hours post T cell activation -----------------
 
