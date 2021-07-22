@@ -287,25 +287,32 @@ reactome <- data.frame(x$ID, x$Description, x$p.adjust, x$geneID)
 # split genes for each Reactome pathway into separate row
 reactome <- reactome %>% mutate(x.geneID = strsplit(as.character(x.geneID), "/")) %>% unnest(x.geneID)
 
-# 105 enriched proteins
+# enriched gene lists
 enriched_105 <- read.csv("/stopgap/donglab/ling/R/megat/genes.csv")
+enriched_209 <- read.csv("/stopgap/donglab/ling/R/megat/209_genes_3h.csv")
+colnames(enriched_209) <- c("gene",	"CD103+_SSX-2_T_cell_clone",	
+                         "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
+                         "CD103-_ESO-1_T_cell_clone")
 
 # select only pathways which key genes
-reactome_enriched <- reactome[reactome$x.geneID %in% enriched_105$gene,]
+reactome_enriched <- reactome[reactome$x.geneID %in% enriched_105$gene |
+                                  reactome$x.geneID %in% enriched_209$gene,]
 reactome_enriched_pathways <- as.data.frame(table(reactome_enriched$x.Description))
 colnames(reactome_enriched_pathways) <- c("Pathway","Number")
 
 reactome_enriched_pathways <- reactome_enriched_pathways[order(-reactome_enriched_pathways$Number),]
-pathways <- as.character(reactome_enriched_pathways$Pathway)
 
-# colour genes if on enriched list 
-reactome_enriched_genes <- genes[genes$gene %in% enriched_105$gene,]
-logfc <- reactome_enriched_genes$avg_log2FC
-names(logfc) <- reactome_enriched_genes$Entrez.Gene
+top <- reactome_enriched_pathways[reactome_enriched_pathways$Number > 1,]
 
-cnetplot(x, foldChange = logfc, showCategory = pathways[1:5], circular = FALSE)
 
-write.csv(reactome_enriched, "/stopgap/donglab/ling/R/megat/gueguen_upregulated_reactome_105_enriched_pathways.csv")
+# # colour genes if on enriched list 
+# reactome_enriched_genes <- genes[genes$gene %in% enriched_105$gene,]
+# logfc <- reactome_enriched_genes$avg_log2FC
+# names(logfc) <- reactome_enriched_genes$Entrez.Gene
+# 
+# cnetplot(x, foldChange = logfc, showCategory = pathways[1:5], circular = FALSE)
+
+write.csv(reactome_enriched, "/stopgap/donglab/ling/R/megat/gueguen_upregulated_reactome_enriched_pathways.csv")
 ```
 
 
