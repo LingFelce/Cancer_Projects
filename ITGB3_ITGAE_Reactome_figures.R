@@ -122,38 +122,47 @@ ggplot(df2, aes(x=as.factor(id), y=Freq, fill=category)) +
   geom_text(data=label, aes(x=id, y=Freq-7.5, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
 
 
-# # merge dataframe together for plotting
-# df <- rbind(ssx_unique, eso_unique, overlap_all_209, overlap_all_209_31)
-# colnames(df) <- c("Pathway", "Number", "group")
-# df$id <- c(1:length(df$Number))
-# 
-# # add empty bars to space out groups, make plot easier to interpret
-# empty_bar <- 4
-# to_add <- data.frame(matrix(NA, empty_bar*nlevels(as.factor(df$group)), ncol(df)))
-# colnames(to_add) <- colnames(df)
-# to_add$group <- rep(levels(as.factor(df$group)), each=empty_bar)
-# df <- rbind(df, to_add)
-# df <- df %>% arrange(group)
-# df$id <- seq(1, nrow(df))
-# 
-# # prepare labels for plot
-# label <- df
-# number_of_bar <- nrow(label)
-# angle <- 90 - 360 * (label$id -0.5)/number_of_bar
-# label$hjust <- ifelse(angle < -90, 1, 0)
-# label$angle <- ifelse(angle < -90, angle + 180, angle)
-# 
-# # plot with Number of genes as labels
-# ggplot(df, aes(x=as.factor(id), y=Number, fill=group)) +
-#   geom_bar(stat="identity", alpha=0.5) +
-#   ylim(-100,120) +
-#   theme_minimal() +
-#   theme(axis.text=element_blank(),
-#         axis.title=element_blank(),
-#         panel.grid=element_blank(),
-#         plot.margin=unit(rep(-1,4), "cm")) +
-#   coord_polar(start=0) +
-#   geom_text(data=label, aes(x=id, y=Number+10, label=Number, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE ) 
+# plotting just overlap_all_209 for circular barplot
+# add category
+overlap_all_209$category <- c("Translational", "Effector response", "Translational", 
+                              "Translational", "Translational", "Translational",
+                              "Effector response","Effector response", "Translational", 
+                              "Translational", "Translational", "Viral infection", 
+                              "Viral infection", "Infection/disease", "Viral infection", 
+                              "Infection/disease", "Viral infection", "Transport", 
+                              "Translational", "Translational", "Metabolism", "Cytolytic", 
+                              "Translational", "Translational", "Translational", 
+                              "Viral infection", "Translational", "Neural development", 
+                              "Translational", "Translational", "Translational", "Metabolism", "Metabolism", 
+                              "Neural development", "Translational", "Metabolism", 
+                              "Translational", "Translational", "Viral infection")
+
+
+# prepare dataframe for plotting circular barplot
+df3 <- overlap_all_209
+df3 <- df3 %>% arrange(category, Var1)
+df3$id <- c(1:length(df3$Freq))
+
+# prepare labels for plot
+label <- df3
+number_of_bar <- nrow(label)
+angle <- 90 - 360 * (label$id -0.5)/number_of_bar
+label$hjust <- ifelse(angle < -90, 1, 0)
+label$angle <- ifelse(angle < -90, angle + 180, angle)
+
+# adjust label
+label <- mutate(label, lab = paste(Var1, "(",Freq,")"))
+
+# plot with pathway names as labels
+ggplot(df3, aes(x=as.factor(id), y=Freq, fill=category)) +
+  geom_bar(stat="identity", alpha=0.5) +
+  theme_minimal() +
+  theme(axis.text=element_blank(),
+        axis.title=element_blank(),
+        panel.grid=element_blank(),
+        plot.margin=unit(rep(-1,4), "cm")) +
+  coord_polar() +
+  geom_text(data=label, aes(x=id, y=Freq-5, label=Freq, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
 
 
 #------- 6 hours-------
@@ -202,14 +211,14 @@ df <- rbind(ssx_unique, eso_unique, overlap_all_105, overlap_all_105_31)
 colnames(df) <- c("Pathway", "Number", "group")
 df$id <- c(1:length(df$Number))
 
-# add empty bars to space out groups, make plot easier to interpret
-empty_bar <- 4
-to_add <- data.frame(matrix(NA, empty_bar*nlevels(as.factor(df$group)), ncol(df)))
-colnames(to_add) <- colnames(df)
-to_add$group <- rep(levels(as.factor(df$group)), each=empty_bar)
-df <- rbind(df, to_add)
-df <- df %>% arrange(group)
-df$id <- seq(1, nrow(df))
+# # add empty bars to space out groups, make plot easier to interpret
+# empty_bar <- 4
+# to_add <- data.frame(matrix(NA, empty_bar*nlevels(as.factor(df$group)), ncol(df)))
+# colnames(to_add) <- colnames(df)
+# to_add$group <- rep(levels(as.factor(df$group)), each=empty_bar)
+# df <- rbind(df, to_add)
+# df <- df %>% arrange(group)
+# df$id <- seq(1, nrow(df))
 
 # prepare labels for plot
 label <- df
@@ -218,17 +227,59 @@ angle <- 90 - 360 * (label$id -0.5)/number_of_bar
 label$hjust <- ifelse(angle < -90, 1, 0)
 label$angle <- ifelse(angle < -90, angle + 180, angle)
 
+# adjust label
+label <- mutate(label, lab = paste(id, "(",Number,")"))
+
 # plot with Number of genes as labels
 ggplot(df, aes(x=as.factor(id), y=Number, fill=group)) +
   geom_bar(stat="identity", alpha=0.5) +
-  ylim(-100,120) +
+  ylim(-10,50) +
   theme_minimal() +
   theme(axis.text=element_blank(),
         axis.title=element_blank(),
         panel.grid=element_blank(),
         plot.margin=unit(rep(-1,4), "cm")) +
-  coord_polar(start=0) +
-  geom_text(data=label, aes(x=id, y=Number+10, label=Number, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE ) 
+  coord_polar() +
+  geom_text(data=label, aes(x=id, y=Number+2, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
+
+write.csv(df, "all_circular_barplot_pathways_6h.csv", row.names=FALSE)
+
+# plotting just overlap_all_105_31 for circular barplot
+# add category
+overlap_all_105_31$category <- c("Effector response", "Effector response", "Effector response", 
+                        "Effector response", "Effector response", "Viral infection", 
+                        "Viral infection", "Infection/disease", "Viral infection", 
+                        "Effector response", "Effector response", "Cytolytic", 
+                        "Effector response", "Effector response", "Effector response", 
+                        "Metabolism", "Effector response", "Effector response", 
+                        "Neural development", "Effector response")
+
+
+# prepare dataframe for plotting circular barplot
+df2 <- overlap_all_105_31
+df2 <- df2 %>% arrange(category, Var1)
+df2$id <- c(1:length(df2$Freq))
+
+# prepare labels for plot
+label <- df2
+number_of_bar <- nrow(label)
+angle <- 90 - 360 * (label$id -0.5)/number_of_bar
+label$hjust <- ifelse(angle < -90, 1, 0)
+label$angle <- ifelse(angle < -90, angle + 180, angle)
+
+# adjust label
+label <- mutate(label, lab = paste(Var1, "(",Freq,")"))
+
+# plot with pathway names as labels
+ggplot(df2, aes(x=as.factor(id), y=Freq, fill=category)) +
+  geom_bar(stat="identity", alpha=0.5) +
+  theme_minimal() +
+  theme(axis.text=element_blank(),
+        axis.title=element_blank(),
+        panel.grid=element_blank(),
+        plot.margin=unit(rep(-1,4), "cm")) +
+  coord_polar() +
+  geom_text(data=label, aes(x=id, y=Freq, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=3, angle= label$angle, inherit.aes = FALSE )
 
 
 #----- Log2 fold change barplots---------------
