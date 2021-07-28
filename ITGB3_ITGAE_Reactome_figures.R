@@ -347,3 +347,122 @@ for (i in 1:nlevels(eso_metabolism_genes$x.Description)){
 for (i in 1:nlevels(eso_metabolism_genes$x.Description)) {
   print(plot_list[[i]])
 }
+
+#----- 6 hours---------------
+
+# read in files
+all <- read.csv("/stopgap/donglab/ling/R/megat/all_genes.csv")
+colnames(all) <- c("Gene",	"CD103+_SSX-2_T_cell_clone",	
+                   "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
+                   "CD103-_ESO-1_T_cell_clone")
+
+# pivot table for ggplotting
+all2 <- pivot_longer(all, "CD103+_SSX-2_T_cell_clone":"CD103-_ESO-1_T_cell_clone")
+
+ssx_all <- read.csv("reactome_results/upregulated_reactome_pathways_cd103_pos_ssx-2.csv")
+eso_all <- read.csv("reactome_results/upregulated_reactome_pathways_cd103_pos_eso-1.csv")
+effector <- read.csv("/stopgap/donglab/ling/R/megat/summary_effector_pathways.csv")
+metabolism <- read.csv("/stopgap/donglab/ling/R/megat/summary_metabolism_pathways.csv")
+
+# effector
+effector_6h <- effector[effector$Timepoint %like% "6h",]
+
+# keeps missing out GRB2:SOS pathway - name too long? Have to do by ID
+effector_pathways <- ssx_all[ssx_all$x.ID %in% 
+                               effector_6h$ID,]
+effector_genes <- merge(all2, effector_pathways,
+                        by.x="Gene", by.y="x.geneID",
+                        all.y=TRUE)
+
+effector_genes$x.Description <- as.factor(effector_genes$x.Description)
+ssx_effector_genes <- effector_genes[effector_genes$name %like% "SSX",]
+eso_effector_genes <- effector_genes[effector_genes$name %like% "ESO",]
+
+# ssx2
+plot_list <- list()
+for (i in 1:nlevels(ssx_effector_genes$x.Description)){
+  d <- levels(ssx_effector_genes$x.Description)[i]
+  p <- ggplot(ssx_effector_genes[ssx_effector_genes$x.Description %in% d,], 
+              aes(x=Gene, y=value, fill=name)) +
+    geom_bar(stat="identity") +
+    scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+                      values=c("#ff2600", "#fc9483")) +
+    labs(title=d,x="Genes", y = "Log2 fold change") +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_list[[i]] <- p
+}
+
+for (i in 1:nlevels(ssx_effector_genes$x.Description)) {
+  print(plot_list[[i]])
+}
+
+# eso-1
+plot_list <- list()
+for (i in 1:nlevels(eso_effector_genes$x.Description)){
+  d <- levels(eso_effector_genes$x.Description)[i]
+  p <- ggplot(eso_effector_genes[eso_effector_genes$x.Description %in% d,], 
+              aes(x=Gene, y=value, fill=name)) +
+    geom_bar(stat="identity") +
+    scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"), 
+                      values=c("#0432ff", "#a4d7f8")) +
+    labs(title=d,x="Genes", y = "Log2 fold change") +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_list[[i]] <- p
+}
+
+for (i in 1:nlevels(eso_effector_genes$x.Description)) {
+  print(plot_list[[i]])
+}
+
+# metabolism
+metabolism_3h <- metabolism[metabolism$Timepoint %like% "3h",]
+metabolism_pathways <- ssx_all[ssx_all$x.Description %in% 
+                                 metabolism_3h$Metabolism.pathways,]
+metabolism_genes <- merge(all2, metabolism_pathways,
+                          by.x="Gene", by.y="x.geneID",
+                          all.y=TRUE)
+
+metabolism_genes$x.Description <- as.factor(metabolism_genes$x.Description)
+ssx_metabolism_genes <- metabolism_genes[metabolism_genes$name %like% "SSX",]
+eso_metabolism_genes <- metabolism_genes[metabolism_genes$name %like% "ESO",]
+
+# ssx2
+plot_list <- list()
+for (i in 1:nlevels(ssx_metabolism_genes$x.Description)){
+  d <- levels(ssx_metabolism_genes$x.Description)[i]
+  p <- ggplot(ssx_metabolism_genes[ssx_metabolism_genes$x.Description %in% d,], 
+              aes(x=Gene, y=value, fill=name)) +
+    geom_bar(stat="identity") +
+    scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+                      values=c("#ff2600", "#fc9483")) +
+    labs(title=d,x="Genes", y = "Log2 fold change") +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_list[[i]] <- p
+}
+
+for (i in 1:nlevels(ssx_metabolism_genes$x.Description)) {
+  print(plot_list[[i]])
+}
+
+# eso-1
+plot_list <- list()
+for (i in 1:nlevels(eso_metabolism_genes$x.Description)){
+  d <- levels(eso_metabolism_genes$x.Description)[i]
+  p <- ggplot(eso_metabolism_genes[eso_metabolism_genes$x.Description %in% d,], 
+              aes(x=Gene, y=value, fill=name)) +
+    geom_bar(stat="identity") +
+    scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"), 
+                      values=c("#0432ff", "#a4d7f8")) +
+    labs(title=d,x="Genes", y = "Log2 fold change") +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+  
+  plot_list[[i]] <- p
+}
+
+for (i in 1:nlevels(eso_metabolism_genes$x.Description)) {
+  print(plot_list[[i]])
+}
