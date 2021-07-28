@@ -51,14 +51,14 @@ df <- rbind(ssx_unique, eso_unique, overlap_all_209, overlap_all_209_31)
 colnames(df) <- c("Pathway", "Number", "group")
 df$id <- c(1:length(df$Number))
 
-# add empty bars to space out groups, make plot easier to interpret
-empty_bar <- 4
-to_add <- data.frame(matrix(NA, empty_bar*nlevels(as.factor(df$group)), ncol(df)))
-colnames(to_add) <- colnames(df)
-to_add$group <- rep(levels(as.factor(df$group)), each=empty_bar)
-df <- rbind(df, to_add)
-df <- df %>% arrange(group)
-df$id <- seq(1, nrow(df))
+# # add empty bars to space out groups, make plot easier to interpret
+# empty_bar <- 4
+# to_add <- data.frame(matrix(NA, empty_bar*nlevels(as.factor(df$group)), ncol(df)))
+# colnames(to_add) <- colnames(df)
+# to_add$group <- rep(levels(as.factor(df$group)), each=empty_bar)
+# df <- rbind(df, to_add)
+# df <- df %>% arrange(group)
+# df$id <- seq(1, nrow(df))
 
 # prepare labels for plot
 label <- df
@@ -80,8 +80,9 @@ ggplot(df, aes(x=as.factor(id), y=Number, fill=group)) +
         panel.grid=element_blank(),
         plot.margin=unit(rep(-1,4), "cm")) +
   coord_polar() +
-  geom_text(data=label, aes(x=id, y=Number, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
+  geom_text(data=label, aes(x=id, y=Number+2, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
 
+write.csv(df, "all_circular_barplot_pathways.csv", row.names=FALSE)
 
 
 # plotting just overlap_all_209_31 for circular barplot
@@ -417,9 +418,9 @@ for (i in 1:nlevels(eso_effector_genes$x.Description)) {
 }
 
 # metabolism
-metabolism_3h <- metabolism[metabolism$Timepoint %like% "3h",]
+metabolism_6h <- metabolism[metabolism$Timepoint %like% "6h",]
 metabolism_pathways <- ssx_all[ssx_all$x.Description %in% 
-                                 metabolism_3h$Metabolism.pathways,]
+                                 metabolism_6h$Metabolism.pathways,]
 metabolism_genes <- merge(all2, metabolism_pathways,
                           by.x="Gene", by.y="x.geneID",
                           all.y=TRUE)
@@ -466,3 +467,58 @@ for (i in 1:nlevels(eso_metabolism_genes$x.Description)){
 for (i in 1:nlevels(eso_metabolism_genes$x.Description)) {
   print(plot_list[[i]])
 }
+
+#----- Selected genes and their pathways---------------
+#------- 3 hours-------
+gene_list <- c("CDK9", "MTOR", "MAPK1", "MAPK2")
+all_3h <- read.csv("/stopgap/donglab/ling/R/megat/all_genes_3h.csv")
+colnames(all_3h) <- c("Gene",	"CD103+_SSX-2_T_cell_clone",	
+                   "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
+                   "CD103-_ESO-1_T_cell_clone")
+
+
+select_genes_3h <- all_3h[all_3h$Gene %in% gene_list,]
+select_genes_3h$timepoint <- "3 hours"
+
+
+ssx_all_3h <- read.csv("reactome_results/upregulated_reactome_pathways_cd103_pos_ssx-2_3h.csv")
+ssx_all_3h$clone <- "SSX-2"
+colnames(ssx_all_3h) <- c("ID", "Description", "p.adjust", "geneID", "clone")
+eso_all_3h <- read.csv("reactome_results/upregulated_reactome_pathways_cd103_pos_eso-1_3h.csv")
+eso_all_3h$clone <- "NY-ESO-1"
+colnames(eso_all_3h) <- c("ID", "Description", "p.adjust", "geneID", "clone")
+
+select_genes_ssx_3h <- merge(select_genes_3h, ssx_all_3h, by.x="Gene", by.y="geneID",
+                      all.x=TRUE)
+select_genes_eso_3h <- merge(select_genes_3h, eso_all_3h, by.x="Gene", by.y="geneID",
+                             all.x=TRUE)
+select_genes_3h_final <- rbind(select_genes_ssx_3h, select_genes_eso_3h)
+
+#------- 6 hours ------
+all_6h <- read.csv("/stopgap/donglab/ling/R/megat/all_genes.csv")
+colnames(all_6h) <- c("Gene",	"CD103+_SSX-2_T_cell_clone",	
+                      "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
+                      "CD103-_ESO-1_T_cell_clone")
+
+select_genes_6h <- all_6h[all_6h$Gene %in% gene_list,]
+select_genes_6h$timepoint <- "6 hours"
+
+ssx_all_6h <- read.csv("reactome_results/upregulated_reactome_pathways_cd103_pos_ssx-2.csv")
+ssx_all_6h$clone <- "SSX-2"
+colnames(ssx_all_6h) <- c("ID", "Description", "p.adjust", "geneID", "clone")
+eso_all_6h <- read.csv("reactome_results/upregulated_reactome_pathways_cd103_pos_eso-1.csv")
+eso_all_6h$clone <- "NY-ESO-1"
+colnames(eso_all_6h) <- c("ID", "Description", "p.adjust", "geneID", "clone")
+
+select_genes_ssx_6h <- merge(select_genes_6h, ssx_all_6h, by.x="Gene", by.y="geneID",
+                             all.x=TRUE)
+select_genes_eso_6h <- merge(select_genes_6h, eso_all_6h, by.x="Gene", by.y="geneID",
+                             all.x=TRUE)
+select_genes_6h_final <- rbind(select_genes_ssx_6h, select_genes_eso_6h)
+
+select_genes_final <- rbind(select_genes_3h_final, select_genes_6h_final)
+
+select_genes_final <- select_genes_final %>% arrange(timepoint, Gene, clone)
+
+write.csv(select_genes_final, "select_genes_and_pathways.csv",
+          row.names=FALSE)
