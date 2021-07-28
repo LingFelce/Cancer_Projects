@@ -45,6 +45,7 @@ overlap_all_209$type <- "Overlap between all and 209 enriched genes"
 overlap_all_209_31 <- overlap_all_209[overlap_all_209$Var1 %in% shared_31$Var1,]
 overlap_all_209_31$type <- "Overlap between all, 209 and 31 enriched genes"
 
+
 # merge dataframe together for plotting
 df <- rbind(ssx_unique, eso_unique, overlap_all_209, overlap_all_209_31)
 colnames(df) <- c("Pathway", "Number", "group")
@@ -66,17 +67,92 @@ angle <- 90 - 360 * (label$id -0.5)/number_of_bar
 label$hjust <- ifelse(angle < -90, 1, 0)
 label$angle <- ifelse(angle < -90, angle + 180, angle)
 
+# adjust label
+label <- mutate(label, lab = paste(id, "(",Number,")"))
+
 # plot with Number of genes as labels
 ggplot(df, aes(x=as.factor(id), y=Number, fill=group)) +
   geom_bar(stat="identity", alpha=0.5) +
-  ylim(-100,120) +
+  ylim(-10,50) +
   theme_minimal() +
   theme(axis.text=element_blank(),
         axis.title=element_blank(),
         panel.grid=element_blank(),
         plot.margin=unit(rep(-1,4), "cm")) +
-  coord_polar(start=0) +
-  geom_text(data=label, aes(x=id, y=Number+10, label=Number, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE ) 
+  coord_polar() +
+  geom_text(data=label, aes(x=id, y=Number, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
+
+
+
+# plotting just overlap_all_209_31 for circular barplot
+# add category
+overlap_all_209_31$category <- 
+  ifelse(grepl("Fc",overlap_all_209_31$Var1), "Effector response",
+         ifelse(grepl("HIV|Infectious", overlap_all_209_31$Var1), "Viral infection",
+                ifelse(grepl("Influenza", overlap_all_209_31$Var1), "Infection/disease",
+                       ifelse(grepl("Metabolism|metabolism", overlap_all_209_31$Var1), "Metabolism",
+                              ifelse(grepl("Neutrophil", overlap_all_209_31$Var1), "Cytolytic",
+                                     ifelse(grepl("ROBO", overlap_all_209_31$Var1), "Neural development",""))))))
+
+
+# prepare dataframe for plotting circular barplot
+df2 <- overlap_all_209_31
+df2$id <- c(1:length(df2$Freq))
+
+# prepare labels for plot
+label <- df2
+number_of_bar <- nrow(label)
+angle <- 90 - 360 * (label$id -0.5)/number_of_bar
+label$hjust <- ifelse(angle < -90, 1, 0)
+label$angle <- ifelse(angle < -90, angle + 180, angle)
+
+# adjust label
+label <- mutate(label, lab = paste(Var1, "(",Freq,")"))
+
+# plot with pathway names as labels
+ggplot(df2, aes(x=as.factor(id), y=Freq, fill=category)) +
+  geom_bar(stat="identity", alpha=0.5) +
+  theme_minimal() +
+  theme(axis.text=element_blank(),
+        axis.title=element_blank(),
+        panel.grid=element_blank(),
+        plot.margin=unit(rep(-1,4), "cm")) +
+  coord_polar() +
+  geom_text(data=label, aes(x=id, y=Freq-7.5, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
+
+
+# # merge dataframe together for plotting
+# df <- rbind(ssx_unique, eso_unique, overlap_all_209, overlap_all_209_31)
+# colnames(df) <- c("Pathway", "Number", "group")
+# df$id <- c(1:length(df$Number))
+# 
+# # add empty bars to space out groups, make plot easier to interpret
+# empty_bar <- 4
+# to_add <- data.frame(matrix(NA, empty_bar*nlevels(as.factor(df$group)), ncol(df)))
+# colnames(to_add) <- colnames(df)
+# to_add$group <- rep(levels(as.factor(df$group)), each=empty_bar)
+# df <- rbind(df, to_add)
+# df <- df %>% arrange(group)
+# df$id <- seq(1, nrow(df))
+# 
+# # prepare labels for plot
+# label <- df
+# number_of_bar <- nrow(label)
+# angle <- 90 - 360 * (label$id -0.5)/number_of_bar
+# label$hjust <- ifelse(angle < -90, 1, 0)
+# label$angle <- ifelse(angle < -90, angle + 180, angle)
+# 
+# # plot with Number of genes as labels
+# ggplot(df, aes(x=as.factor(id), y=Number, fill=group)) +
+#   geom_bar(stat="identity", alpha=0.5) +
+#   ylim(-100,120) +
+#   theme_minimal() +
+#   theme(axis.text=element_blank(),
+#         axis.title=element_blank(),
+#         panel.grid=element_blank(),
+#         plot.margin=unit(rep(-1,4), "cm")) +
+#   coord_polar(start=0) +
+#   geom_text(data=label, aes(x=id, y=Number+10, label=Number, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE ) 
 
 
 #------- 6 hours-------
