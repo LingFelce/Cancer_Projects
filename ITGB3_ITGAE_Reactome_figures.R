@@ -282,6 +282,61 @@ ggplot(df2, aes(x=as.factor(id), y=Freq, fill=category)) +
   geom_text(data=label, aes(x=id, y=Freq, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=3, angle= label$angle, inherit.aes = FALSE )
 
 
+# plotting just overlap_all_105 for circular barplot
+# add category
+overlap_all_105$category <- c("Effector response", "Metabolism", "Effector response", 
+                              "Translational", "Effector response", "Transport", 
+                              "Effector response", "Effector response", "Transport", 
+                              "Translational", "Translational", "Translational", 
+                              "Effector response", "Effector response", "Translational", 
+                              "Effector response", "Translational", "Viral infection", 
+                              "Viral infection", "Infection/disease", "Viral infection", 
+                              "Viral infection", "Viral infection", "Effector response", 
+                              "Effector response", "Transport", "Effector response", 
+                              "Translational", "Effector response", "Translational",  
+                              "Effector response", "Effector response", "Translational", 
+                              "Translational","Translational",  "Cytolytic", "Translational", 
+                              "Translational", "Translational", "Translational", 
+                              "Translational", "Translational", "Effector response", 
+                              "Effector response", "Effector response", "Translational", 
+                              "Translational", "Neural development", "Viral infection", 
+                              "Effector response", "Translational", "Translational", 
+                              "Metabolism", "Effector response", "Effector response", 
+                              "Neural development", "Effector response", "Translational", 
+                              "Effector response", "Translational", "Translational", 
+                              "Translational", "Translational", "Translational", 
+                              "Transport", "Effector response") 
+
+
+
+# prepare dataframe for plotting circular barplot
+df3 <- overlap_all_105
+df3 <- df3 %>% arrange(category, Var1)
+df3$id <- c(1:length(df3$Freq))
+
+# prepare labels for plot
+label <- df3
+number_of_bar <- nrow(label)
+angle <- 90 - 360 * (label$id -0.5)/number_of_bar
+label$hjust <- ifelse(angle < -90, 1, 0)
+label$angle <- ifelse(angle < -90, angle + 180, angle)
+
+# adjust label
+label <- mutate(label, lab = paste(Var1, "(",Freq,")"))
+
+# plot with pathway names as labels
+ggplot(df3, aes(x=as.factor(id), y=Freq, fill=category)) +
+  geom_bar(stat="identity", alpha=0.5) +
+  theme_minimal() +
+  theme(axis.text=element_blank(),
+        axis.title=element_blank(),
+        panel.grid=element_blank(),
+        plot.margin=unit(rep(-1,4), "cm")) +
+  coord_polar() +
+  geom_text(data=label, aes(x=id, y=Freq+1, label=Freq, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2, angle= label$angle, inherit.aes = FALSE )
+
+
+
 #----- Log2 fold change barplots---------------
 #----- 3 hours---------------
 
