@@ -58,6 +58,26 @@ colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 write.csv(ssx2_enriched, "upregulated_pathways_key_105_genes_cd103_pos_ssx2_6h.csv",
           row.names=FALSE)
 
+# 6h effector network plots
+effector <- read.csv("/stopgap/donglab/ling/R/megat/summary_effector_pathways.csv")
+effector_6h <- effector[effector$Timepoint %like% "6h",]
+
+logfc <- all_genes$`CD103+_SSX-2_T_cell_clone`
+names(logfc) <- all_genes$Protein_acronym
+
+cnetplot(x, foldChange = logfc, 
+         showCategory = c(effector_6h$Effector.response.pathways, x$Description[46]), circular = FALSE)
+
+
+# 6h metabolism network plots
+metabolism <- read.csv("/stopgap/donglab/ling/R/megat/summary_metabolism_pathways.csv")
+metabolism_6h <- metabolism[metabolism$Timepoint %like% "6h",]
+
+logfc <- all_genes$`CD103+_SSX-2_T_cell_clone`
+names(logfc) <- all_genes$Protein_acronym
+
+cnetplot(x, foldChange = logfc, 
+         showCategory = metabolism_6h$Metabolism.pathways, circular = FALSE)
 
 
 #---------------------- Upregulated CD103+_ESO-1_T_cell_clone --------------------
@@ -192,7 +212,7 @@ shared_6h <- shared_6h[-16]
 # pathways <- shared_6h
 # cnetplot(y, foldChange = logfc, showCategory = pathways, circular = FALSE)
 
-#-------------- network plots -------------------------
+#-------------- network plots (old) -------------------------
 
 # show pathways unique to 6h
 ssx2_enriched_genes <- genes[genes$Protein_acronym %in% enriched$gene,]
@@ -258,6 +278,27 @@ colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 
 write.csv(ssx2_enriched, "upregulated_pathways_key_209_genes_cd103_pos_ssx2_3h.csv",
           row.names=FALSE)
+
+# 3h effector network plots
+effector <- read.csv("/stopgap/donglab/ling/R/megat/summary_effector_pathways.csv")
+effector_3h <- effector[effector$Timepoint %like% "3h",]
+
+logfc <- all_genes$`CD103+_SSX-2_T_cell_clone`
+names(logfc) <- all_genes$Protein_acronym
+
+cnetplot(x, foldChange = logfc, 
+         showCategory = effector_3h$Effector.response.pathways, circular = FALSE)
+
+
+# 3h metabolism network plots
+metabolism <- read.csv("/stopgap/donglab/ling/R/megat/summary_metabolism_pathways.csv")
+metabolism_3h <- metabolism[metabolism$Timepoint %like% "3h",]
+
+logfc <- all_genes$`CD103+_SSX-2_T_cell_clone`
+names(logfc) <- all_genes$Protein_acronym
+
+cnetplot(x, foldChange = logfc, 
+         showCategory = metabolism_3h$Metabolism.pathways, circular = FALSE)
 
 #---------------------- Upregulated CD103+_ESO-1_T_cell_clone --------------------
 genes <- all_genes[,c(1, 4)]
@@ -384,7 +425,7 @@ not_shared_6h <- setdiff(shared_6h, shared_3h)
 # with Gueguen list (have to run from seurat_gueguen.Rmd)
 shared_gueguen <- intersect(shared, top$Pathway)
 
-#-------------- network plots -------------------------
+#-------------- network plots (old)-------------------------
 
 # show pathways unique to 3h
 ssx2_enriched_genes <- genes[genes$Protein_acronym %in% enriched$gene,]
