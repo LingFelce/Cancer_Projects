@@ -151,19 +151,21 @@ label$hjust <- ifelse(angle < -90, 1, 0)
 label$angle <- ifelse(angle < -90, angle + 180, angle)
 
 # adjust label
-label <- mutate(label, lab = paste(Var1, "(",Freq,")"))
+label <- mutate(label, lab = paste(id, "(",Freq,")"))
 
 # plot with pathway names as labels
 ggplot(df3, aes(x=as.factor(id), y=Freq, fill=category)) +
   geom_bar(stat="identity", alpha=0.5) +
+  ylim(-10,60) +
   theme_minimal() +
   theme(axis.text=element_blank(),
         axis.title=element_blank(),
         panel.grid=element_blank(),
         plot.margin=unit(rep(-1,4), "cm")) +
   coord_polar() +
-  geom_text(data=label, aes(x=id, y=Freq-5, label=Freq, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
+  geom_text(data=label, aes(x=id, y=Freq, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
 
+write.csv(df3, "overlap_all_209_circular_barplot_pathways_3h.csv", row.names=FALSE)
 
 #------- 6 hours-------
 
@@ -322,20 +324,21 @@ label$hjust <- ifelse(angle < -90, 1, 0)
 label$angle <- ifelse(angle < -90, angle + 180, angle)
 
 # adjust label
-label <- mutate(label, lab = paste(Var1, "(",Freq,")"))
+label <- mutate(label, lab = paste(id, "(",Freq,")"))
 
 # plot with pathway names as labels
 ggplot(df3, aes(x=as.factor(id), y=Freq, fill=category)) +
   geom_bar(stat="identity", alpha=0.5) +
+  ylim(-10,60) +
   theme_minimal() +
   theme(axis.text=element_blank(),
         axis.title=element_blank(),
         panel.grid=element_blank(),
         plot.margin=unit(rep(-1,4), "cm")) +
   coord_polar() +
-  geom_text(data=label, aes(x=id, y=Freq+1, label=Freq, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2, angle= label$angle, inherit.aes = FALSE )
+  geom_text(data=label, aes(x=id, y=Freq, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2, angle= label$angle, inherit.aes = FALSE )
 
-
+write.csv(df3, "overlap_all_105_circular_barplot_pathways_6h.csv", row.names=FALSE)
 
 #----- Log2 fold change barplots---------------
 #----- 3 hours---------------
