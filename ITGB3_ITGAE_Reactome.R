@@ -82,15 +82,6 @@ cnetplot(x, foldChange = logfc,
 # pathways linked to diseases of signal transduction
 emapplot(x, showCategory = 114, cex_category=0.5) 
 
-emapplot(x, showCategory = c("Signaling by Interleukins",
-                             "Signaling by BRAF and RAF fusions",
-                             "Paradoxical activation of RAF signaling by kinase inactive BRAF",
-                             "Signaling by moderate kinase activity BRAF mutants",
-                             "Signaling by RAS mutants",
-                             "Signaling downstream of RAS mutants",
-                             "Oncogenic MAPK signaling",
-                             "Diseases of signal transduction"), cex_category=1)
-
 cnetplot(x, foldChange = logfc, showCategory = c("Signaling by Interleukins",
                              "Signaling by BRAF and RAF fusions",
                              "Paradoxical activation of RAF signaling by kinase inactive BRAF",
@@ -99,6 +90,9 @@ cnetplot(x, foldChange = logfc, showCategory = c("Signaling by Interleukins",
                              "Signaling downstream of RAS mutants",
                              "Oncogenic MAPK signaling",
                              "Diseases of signal transduction"), cex_category=1)
+
+cnetplot(x, foldChange= logfc, showCategory = c("Diseases of signal transduction",
+                                                "Cellular response to heat stress"))
 
 #---------------------- Upregulated CD103+_ESO-1_T_cell_clone --------------------
 genes <- all_genes[,c(1, 4)]
@@ -137,6 +131,23 @@ colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
 
 write.csv(eso1_enriched, "upregulated_pathways_key_105_genes_cd103_pos_eso1_6h.csv",
           row.names=FALSE)
+
+# pathways linked to Diseases of signal transduction
+
+emapplot(y, showCategory = 80, cex_category=0.5)
+
+logfc <- all_genes$`CD103+_ESO-1_T_cell_clone`
+names(logfc) <- all_genes$Protein_acronym
+
+cnetplot(y, foldChange = logfc, showCategory = c("Diseases of signal transduction",
+                                                 "Platelet activation, signaling and aggregation",
+                                                 "Signaling by BRAF and RAF fusions",
+                                                 "Oncogenic MAPK signaling",
+                                                 "Signaling by high-kinase activity BRAF mutants"))
+
+cnetplot(y, foldChange = logfc, showCategory = c("Diseases of signal transduction",
+                                                 "VEGFA-VEGFR2 Pathway",
+                                                 "Signaling by VEGF"))
 
 
 #----------------- Upregulated CD103- SSX-2 T cell clone -------------------
@@ -319,6 +330,8 @@ names(logfc) <- all_genes$Protein_acronym
 
 cnetplot(x, foldChange = logfc, 
          showCategory = metabolism_3h$Metabolism.pathways, circular = FALSE)
+
+
 
 #---------------------- Upregulated CD103+_ESO-1_T_cell_clone --------------------
 genes <- all_genes[,c(1, 4)]
