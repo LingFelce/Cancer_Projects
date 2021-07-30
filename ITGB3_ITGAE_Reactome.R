@@ -58,18 +58,10 @@ colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 write.csv(ssx2_enriched, "upregulated_pathways_key_105_genes_cd103_pos_ssx2_6h.csv",
           row.names=FALSE)
 
-# 6h effector network plots
+# 6h effector and metabolism network plots
 effector <- read.csv("/stopgap/donglab/ling/R/megat/summary_effector_pathways.csv")
 effector_6h <- effector[effector$Timepoint %like% "6h",]
 
-logfc <- all_genes$`CD103+_SSX-2_T_cell_clone`
-names(logfc) <- all_genes$Protein_acronym
-
-cnetplot(x, foldChange = logfc, 
-         showCategory = c(effector_6h$Effector.response.pathways, x$Description[46]), circular = FALSE)
-
-
-# 6h metabolism network plots
 metabolism <- read.csv("/stopgap/donglab/ling/R/megat/summary_metabolism_pathways.csv")
 metabolism_6h <- metabolism[metabolism$Timepoint %like% "6h",]
 
@@ -77,22 +69,29 @@ logfc <- all_genes$`CD103+_SSX-2_T_cell_clone`
 names(logfc) <- all_genes$Protein_acronym
 
 cnetplot(x, foldChange = logfc, 
-         showCategory = metabolism_6h$Metabolism.pathways, circular = FALSE)
+         showCategory = c(effector_6h$Effector.response.pathways, x$Description[46],
+                          metabolism_6h$Metabolism.pathways), circular = FALSE)
 
-# pathways linked to diseases of signal transduction
-emapplot(x, showCategory = 114, cex_category=0.5) 
+# pathways linked to ITGB3 + ITGAE - only ITGB3?
+itg <- ssx2[ssx2$x.geneID %like% "ITGB3|ITGAE",]
 
-cnetplot(x, foldChange = logfc, showCategory = c("Signaling by Interleukins",
-                             "Signaling by BRAF and RAF fusions",
-                             "Paradoxical activation of RAF signaling by kinase inactive BRAF",
-                             "Signaling by moderate kinase activity BRAF mutants",
-                             "Signaling by RAS mutants",
-                             "Signaling downstream of RAS mutants",
-                             "Oncogenic MAPK signaling",
-                             "Diseases of signal transduction"), cex_category=1)
+cnetplot(x, foldChange = logfc, 
+         showCategory = itg$x.Description)
 
-cnetplot(x, foldChange= logfc, showCategory = c("Diseases of signal transduction",
-                                                "Cellular response to heat stress"))
+# # pathways linked to diseases of signal transduction
+# emapplot(x, showCategory = 114, cex_category=0.5) 
+# 
+# cnetplot(x, foldChange = logfc, showCategory = c("Signaling by Interleukins",
+#                              "Signaling by BRAF and RAF fusions",
+#                              "Paradoxical activation of RAF signaling by kinase inactive BRAF",
+#                              "Signaling by moderate kinase activity BRAF mutants",
+#                              "Signaling by RAS mutants",
+#                              "Signaling downstream of RAS mutants",
+#                              "Oncogenic MAPK signaling",
+#                              "Diseases of signal transduction"), cex_category=1)
+# 
+# cnetplot(x, foldChange= logfc, showCategory = c("Diseases of signal transduction",
+#                                                 "Cellular response to heat stress"))
 
 #---------------------- Upregulated CD103+_ESO-1_T_cell_clone --------------------
 genes <- all_genes[,c(1, 4)]
@@ -132,22 +131,44 @@ colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
 write.csv(eso1_enriched, "upregulated_pathways_key_105_genes_cd103_pos_eso1_6h.csv",
           row.names=FALSE)
 
-# pathways linked to Diseases of signal transduction
 
-emapplot(y, showCategory = 80, cex_category=0.5)
+# 6h effector and metabolism network plots
+effector <- read.csv("/stopgap/donglab/ling/R/megat/summary_effector_pathways.csv")
+effector_6h <- effector[effector$Timepoint %like% "6h",]
+
+metabolism <- read.csv("/stopgap/donglab/ling/R/megat/summary_metabolism_pathways.csv")
+metabolism_6h <- metabolism[metabolism$Timepoint %like% "6h",]
 
 logfc <- all_genes$`CD103+_ESO-1_T_cell_clone`
 names(logfc) <- all_genes$Protein_acronym
 
-cnetplot(y, foldChange = logfc, showCategory = c("Diseases of signal transduction",
-                                                 "Platelet activation, signaling and aggregation",
-                                                 "Signaling by BRAF and RAF fusions",
-                                                 "Oncogenic MAPK signaling",
-                                                 "Signaling by high-kinase activity BRAF mutants"))
+cnetplot(y, foldChange = logfc, 
+         showCategory = c(effector_6h$Effector.response.pathways, y$Description[17],
+                          metabolism_6h$Metabolism.pathways), circular = FALSE,
+         cex_category=0.5)
 
-cnetplot(y, foldChange = logfc, showCategory = c("Diseases of signal transduction",
-                                                 "VEGFA-VEGFR2 Pathway",
-                                                 "Signaling by VEGF"))
+# pathways linked to ITGB3 + ITGAE - only ITGB3?
+itg <- eso1[eso1$y.geneID %like% "ITGB3|ITGAE",]
+
+cnetplot(y, foldChange = logfc, 
+         showCategory = c(itg$y.Description, itg$y.Description[3]))
+
+# # pathways linked to Diseases of signal transduction
+# 
+# emapplot(y, showCategory = 80, cex_category=0.5)
+# 
+# logfc <- all_genes$`CD103+_ESO-1_T_cell_clone`
+# names(logfc) <- all_genes$Protein_acronym
+# 
+# cnetplot(y, foldChange = logfc, showCategory = c("Diseases of signal transduction",
+#                                                  "Platelet activation, signaling and aggregation",
+#                                                  "Signaling by BRAF and RAF fusions",
+#                                                  "Oncogenic MAPK signaling",
+#                                                  "Signaling by high-kinase activity BRAF mutants"))
+# 
+# cnetplot(y, foldChange = logfc, showCategory = c("Diseases of signal transduction",
+#                                                  "VEGFA-VEGFR2 Pathway",
+#                                                  "Signaling by VEGF"))
 
 
 #----------------- Upregulated CD103- SSX-2 T cell clone -------------------
@@ -310,18 +331,10 @@ colnames(ssx2_enriched_pathways) <- c("Pathway","No. of genes")
 write.csv(ssx2_enriched, "upregulated_pathways_key_209_genes_cd103_pos_ssx2_3h.csv",
           row.names=FALSE)
 
-# 3h effector network plots
+# 3h effector and metabolism network plots
 effector <- read.csv("/stopgap/donglab/ling/R/megat/summary_effector_pathways.csv")
 effector_3h <- effector[effector$Timepoint %like% "3h",]
 
-logfc <- all_genes$`CD103+_SSX-2_T_cell_clone`
-names(logfc) <- all_genes$Protein_acronym
-
-cnetplot(x, foldChange = logfc, 
-         showCategory = effector_3h$Effector.response.pathways, circular = FALSE)
-
-
-# 3h metabolism network plots
 metabolism <- read.csv("/stopgap/donglab/ling/R/megat/summary_metabolism_pathways.csv")
 metabolism_3h <- metabolism[metabolism$Timepoint %like% "3h",]
 
@@ -329,7 +342,15 @@ logfc <- all_genes$`CD103+_SSX-2_T_cell_clone`
 names(logfc) <- all_genes$Protein_acronym
 
 cnetplot(x, foldChange = logfc, 
-         showCategory = metabolism_3h$Metabolism.pathways, circular = FALSE)
+         showCategory = c(effector_3h$Effector.response.pathways, 
+                          metabolism_3h$Metabolism.pathways), circular = FALSE,
+         cex_category=0.5)
+
+# pathways linked to ITGB3 + ITGAE - none?
+itg <- ssx2[ssx2$x.geneID %like% "ITGB3|ITGAE",]
+
+# cnetplot(x, foldChange = logfc, 
+#          showCategory = c(itg$x.Description, itg$x.Description[3]))
 
 
 
@@ -371,6 +392,27 @@ colnames(eso1_enriched_pathways) <- c("Pathway","No. of genes")
 write.csv(eso1_enriched, "upregulated_pathways_key_209_genes_cd103_pos_eso1_3h.csv",
           row.names=FALSE)
 
+
+# 3h effector and metabolism network plots
+effector <- read.csv("/stopgap/donglab/ling/R/megat/summary_effector_pathways.csv")
+effector_3h <- effector[effector$Timepoint %like% "3h",]
+
+metabolism <- read.csv("/stopgap/donglab/ling/R/megat/summary_metabolism_pathways.csv")
+metabolism_3h <- metabolism[metabolism$Timepoint %like% "3h",]
+
+logfc <- all_genes$`CD103+_ESO-1_T_cell_clone`
+names(logfc) <- all_genes$Protein_acronym
+
+cnetplot(y, foldChange = logfc, 
+         showCategory = c(effector_3h$Effector.response.pathways, 
+                          metabolism_3h$Metabolism.pathways), circular = FALSE,
+         cex_category=0.5)
+
+# pathways linked to ITGB3 + ITGAE - none?
+itg <- eso1[eso1$y.geneID %like% "ITGB3|ITGAE",]
+
+# cnetplot(x, foldChange = logfc, 
+#          showCategory = c(itg$x.Description, itg$x.Description[3]))
 
 #----------------- Upregulated CD103- SSX-2 T cell clone -------------------
 
