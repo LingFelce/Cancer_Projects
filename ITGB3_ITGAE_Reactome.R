@@ -72,6 +72,14 @@ cnetplot(x, foldChange = logfc,
          showCategory = c(effector_6h$Effector.response.pathways, x$Description[46],
                           metabolism_6h$Metabolism.pathways), circular = FALSE)
 
+# Megat's selection
+selected_pathways <- c(effector_6h$Effector.response.pathways,
+                       metabolism_6h$Metabolism.pathways)
+selected_pathways <- selected_pathways[-c(2, 5, 9, 14,16)]
+
+cnetplot(x, foldChange = logfc, 
+         showCategory = selected_pathways, circular = FALSE)
+
 # pathways linked to ITGB3 + ITGAE - only ITGB3?
 itg <- ssx2[ssx2$x.geneID %like% "ITGB3|ITGAE",]
 
