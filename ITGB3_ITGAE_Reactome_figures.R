@@ -4,6 +4,13 @@ library(tidyverse)
 library(data.table)
 library(stringr)
 
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(tidyverse)
+library(ReactomePA)
+library(DOSE)
+
+
 #------ 3 hours-------------------
 
 # read in pathway files
@@ -631,3 +638,92 @@ select_genes_final <- select_genes_final %>% arrange(timepoint, Gene, clone)
 
 write.csv(select_genes_final, "select_genes_and_pathways.csv",
           row.names=FALSE)
+
+
+#----- network plot for selected pathways combined 3h + 6h ------
+
+# generate enrichResult object for 3h and 6h CD103+ SSX-2 clone
+
+# 6 hours post T cell activation
+all_genes <- read.csv("/stopgap/donglab/ling/R/megat/all_genes.csv")
+colnames(all_genes) <- c("Protein_acronym",	"CD103+_SSX-2_T_cell_clone",	
+                         "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
+                         "CD103-_ESO-1_T_cell_clone")
+
+genes <- all_genes[,1:2]
+
+genes <- genes[genes$`CD103+_SSX-2_T_cell_clone` > 0,]
+
+genes$Entrez.Gene <- mapIds(org.Hs.eg.db, keys=as.character(genes$Protein_acronym), keytype="SYMBOL", column="ENTREZID")
+
+genes <- genes[is.na(genes$Entrez.Gene)==FALSE,]
+
+genes <- genes[!duplicated(genes$Entrez.Gene),]
+
+geneset <- as.character(genes$Entrez.Gene)
+
+x <- enrichPathway(gene=geneset, pvalueCutoff = 0.01, qvalueCutoff = 0.05, readable=TRUE)
+
+dim(x)
+
+# 3 hours post T cell activation
+
+all_genes <- read.csv("/stopgap/donglab/ling/R/megat/all_genes_3h.csv")
+colnames(all_genes) <- c("Protein_acronym",	"CD103+_SSX-2_T_cell_clone",	
+                         "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
+                         "CD103-_ESO-1_T_cell_clone")
+
+genes <- all_genes[,1:2]
+
+genes <- genes[genes$`CD103+_SSX-2_T_cell_clone` > 0,]
+
+genes$Entrez.Gene <- mapIds(org.Hs.eg.db, keys=as.character(genes$Protein_acronym), keytype="SYMBOL", column="ENTREZID")
+
+genes <- genes[is.na(genes$Entrez.Gene)==FALSE,]
+
+genes <- genes[!duplicated(genes$Entrez.Gene),]
+
+geneset <- as.character(genes$Entrez.Gene)
+
+y <- enrichPathway(gene=geneset, pvalueCutoff = 0.01, qvalueCutoff = 0.05, readable=TRUE)
+
+dim(y)
+
+
+# merge 3h and 6h results
+
+# can't get showCategory to work (only selected pathways) when merge total 3h and 6h enrichResult objects
+# so need to subset 3h and 6h first, then merge
+
+# pathway names from previous network plots
+pathways_6h <- c("Antiviral mechanism by IFN-stimulated genes" , 
+              "TCR signaling",
+              "Diseases of signal transduction",
+              "Integrin signaling",
+              "p130Cas linkage to MAPK signaling for integrins",
+              "Integrin alphaIIb beta3 signaling",
+              "Signaling by BRAF and RAF fusions",
+              "Oncogenic MAPK signaling",
+              "Signaling by high-kinase activity BRAF mutants",
+              "Selenoamino acid metabolism",
+              "GRB2:SOS provides linkage to MAPK signaling for Integrins ")
+
+pathways_3h <- c("Metabolism of amino acids and derivatives",
+                 "The citric acid (TCA) cycle and respiratory electron transport")
+
+# get IDs for selected pathways
+h3 <- data.frame(y$ID, y$Description)
+h6 <- data.frame(x$ID, x$Description)
+
+ids_3h <- h3[h3$y.Description %in% pathways_3h,]
+ids_6h <- h6[h6$x.Description %in% pathways_6h,]
+
+# subset enrichResult objects based on selected IDs
+x@result <-  x@result[x@result$ID %in% ids_6h$x.ID,]
+y@result <- y@result[y@result$ID %in% ids_3h$y.ID,]
+
+# merge to form compareClusterResult and plot all pathways
+z <- merge_result(list(h3=y, h6=x))
+
+cnetplot(z, showCategory = 20, circular = FALSE)
+
