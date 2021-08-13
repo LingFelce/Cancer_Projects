@@ -435,44 +435,94 @@ metabolism_genes$x.Description <- as.factor(metabolism_genes$x.Description)
 ssx_metabolism_genes <- metabolism_genes[metabolism_genes$name %like% "SSX",]
 eso_metabolism_genes <- metabolism_genes[metabolism_genes$name %like% "ESO",]
 
+# plot specific barplots
 # ssx2
-plot_list <- list()
-for (i in 1:nlevels(ssx_metabolism_genes$x.Description)){
-  d <- levels(ssx_metabolism_genes$x.Description)[i]
-  p <- ggplot(ssx_metabolism_genes[ssx_metabolism_genes$x.Description %in% d,], 
-              aes(x=Gene, y=value, fill=name)) +
-    geom_bar(stat="identity") +
-    scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
-                      values=c("#ff2600", "#fc9483")) +
-    labs(title=d,x="Genes", y = "Log2 fold change") +
-    theme_classic() +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  plot_list[[i]] <- p
-}
+pdf("figures/barplot_lfc_ssx-2_metabolism_of_amino_acids.pdf", width=8, height=5)
+d <- "Metabolism of amino acids and derivatives"
+ggplot(ssx_metabolism_genes[ssx_metabolism_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+                    values=c("#ff2600", "#fc9483")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
 
-for (i in 1:nlevels(ssx_metabolism_genes$x.Description)) {
-  print(plot_list[[i]])
-}
+pdf("figures/barplot_lfc_ssx-2_selenoamino_acid.pdf", width=8, height=5)
+d <- "Selenoamino acid metabolism"
+ggplot(ssx_metabolism_genes[ssx_metabolism_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+                    values=c("#ff2600", "#fc9483")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
 
-# eso-1
-plot_list <- list()
-for (i in 1:nlevels(eso_metabolism_genes$x.Description)){
-  d <- levels(eso_metabolism_genes$x.Description)[i]
-  p <- ggplot(eso_metabolism_genes[eso_metabolism_genes$x.Description %in% d,], 
-              aes(x=Gene, y=value, fill=name)) +
-    geom_bar(stat="identity") +
-    scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"), 
-                      values=c("#0432ff", "#a4d7f8")) +
-    labs(title=d,x="Genes", y = "Log2 fold change") +
-    theme_classic() +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
-    
-  plot_list[[i]] <- p
-}
+# eso1
+pdf("figures/barplot_lfc_ny-eso-1_metabolism_of_amino_acids.pdf", width=8, height=5)
+d <- "Metabolism of amino acids and derivatives"
+ggplot(eso_metabolism_genes[eso_metabolism_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+           geom_bar(stat="identity") +
+           scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"),
+                             values=c("#0432ff", "#a4d7f8")) +
+           labs(title=d,x="Genes", y = "Log2 fold change") +
+           theme_classic() +
+           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
 
-for (i in 1:nlevels(eso_metabolism_genes$x.Description)) {
-  print(plot_list[[i]])
-}
+pdf("figures/barplot_lfc_ny-eso-1_selenoamino_acid.pdf", width=8, height=5)
+d <- "Selenoamino acid metabolism"
+ggplot(eso_metabolism_genes[eso_metabolism_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"),
+                    values=c("#0432ff", "#a4d7f8")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+# # ssx2
+# plot_list <- list()
+# for (i in 1:nlevels(ssx_metabolism_genes$x.Description)){
+#   d <- levels(ssx_metabolism_genes$x.Description)[i]
+#   p <- ggplot(ssx_metabolism_genes[ssx_metabolism_genes$x.Description %in% d,], 
+#               aes(x=Gene, y=value, fill=name)) +
+#     geom_bar(stat="identity") +
+#     scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+#                       values=c("#ff2600", "#fc9483")) +
+#     labs(title=d,x="Genes", y = "Log2 fold change") +
+#     theme_classic() +
+#     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+#   plot_list[[i]] <- p
+# }
+# 
+# for (i in 1:nlevels(ssx_metabolism_genes$x.Description)) {
+#   print(plot_list[[i]])
+# }
+# 
+# # eso-1
+# plot_list <- list()
+# for (i in 1:nlevels(eso_metabolism_genes$x.Description)){
+#   d <- levels(eso_metabolism_genes$x.Description)[i]
+#   p <- ggplot(eso_metabolism_genes[eso_metabolism_genes$x.Description %in% d,], 
+#               aes(x=Gene, y=value, fill=name)) +
+#     geom_bar(stat="identity") +
+#     scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"), 
+#                       values=c("#0432ff", "#a4d7f8")) +
+#     labs(title=d,x="Genes", y = "Log2 fold change") +
+#     theme_classic() +
+#     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+#     
+#   plot_list[[i]] <- p
+# }
+# 
+# for (i in 1:nlevels(eso_metabolism_genes$x.Description)) {
+#   print(plot_list[[i]])
+# }
 
 #----- 6 hours---------------
 
