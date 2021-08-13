@@ -163,6 +163,8 @@ label$angle <- ifelse(angle < -90, angle + 180, angle)
 label <- mutate(label, lab = paste(id, "(",Freq,")"))
 
 # plot with pathway names as labels
+
+pdf("figures/circular_barplot_all_209_overlap_3h.pdf", width=7, height=4)
 ggplot(df3, aes(x=as.factor(id), y=Freq, fill=category)) +
   geom_bar(stat="identity", alpha=0.5) +
   ylim(-10,60) +
@@ -172,7 +174,8 @@ ggplot(df3, aes(x=as.factor(id), y=Freq, fill=category)) +
         panel.grid=element_blank(),
         plot.margin=unit(rep(-1,4), "cm")) +
   coord_polar() +
-  geom_text(data=label, aes(x=id, y=Freq, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
+  geom_text(data=label, aes(x=id, y=Freq+1, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
+dev.off()
 
 write.csv(df3, "overlap_all_209_circular_barplot_pathways_3h.csv", row.names=FALSE)
 
@@ -282,6 +285,8 @@ label$angle <- ifelse(angle < -90, angle + 180, angle)
 label <- mutate(label, lab = paste(Var1, "(",Freq,")"))
 
 # plot with pathway names as labels
+
+pdf("figures/circular_barplot_all_105_31_overlap_6h.pdf", width=14, height=12)
 ggplot(df2, aes(x=as.factor(id), y=Freq, fill=category)) +
   geom_bar(stat="identity", alpha=0.5) +
   theme_minimal() +
@@ -290,8 +295,8 @@ ggplot(df2, aes(x=as.factor(id), y=Freq, fill=category)) +
         panel.grid=element_blank(),
         plot.margin=unit(rep(-1,4), "cm")) +
   coord_polar() +
-  geom_text(data=label, aes(x=id, y=Freq, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=3, angle= label$angle, inherit.aes = FALSE )
-
+  geom_text(data=label, aes(x=id, y=Freq+1, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
+dev.off()
 
 # plotting just overlap_all_105 for circular barplot
 # add category
@@ -336,6 +341,7 @@ label$angle <- ifelse(angle < -90, angle + 180, angle)
 label <- mutate(label, lab = paste(id, "(",Freq,")"))
 
 # plot with pathway names as labels
+pdf("figures/circular_barplot_all_105_overlap_6h.pdf", width=8, height=5)
 ggplot(df3, aes(x=as.factor(id), y=Freq, fill=category)) +
   geom_bar(stat="identity", alpha=0.5) +
   ylim(-10,60) +
@@ -345,7 +351,8 @@ ggplot(df3, aes(x=as.factor(id), y=Freq, fill=category)) +
         panel.grid=element_blank(),
         plot.margin=unit(rep(-1,4), "cm")) +
   coord_polar() +
-  geom_text(data=label, aes(x=id, y=Freq, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2, angle= label$angle, inherit.aes = FALSE )
+  geom_text(data=label, aes(x=id, y=Freq+1, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2, angle= label$angle, inherit.aes = FALSE )
+dev.off()
 
 write.csv(df3, "overlap_all_105_circular_barplot_pathways_6h.csv", row.names=FALSE)
 
@@ -642,7 +649,7 @@ write.csv(select_genes_final, "select_genes_and_pathways.csv",
           row.names=FALSE)
 
 
-#----- network plot for selected pathways combined 3h + 6h ------
+#----- network plot for selected pathways combined 3h + 6h SSX-2 ------
 
 # generate enrichResult object for 3h and 6h CD103+ SSX-2 clone
 
@@ -724,5 +731,93 @@ y@result <- y@result[y@result$ID %in% ids_3h$y.ID,]
 # merge to form compareClusterResult and plot all pathways
 z <- merge_result(list(h3=y, h6=x))
 
+pdf("figures/network_plot_ssx-2_3h_6h_combined.pdf", width=10, height=11)
 cnetplot(z, showCategory = 20, circular = FALSE, layout="kk")
+dev.off()
 
+
+#----- network plot for selected pathways combined 3h + 6h NY-ESO-1 ------
+
+# generate enrichResult object for 3h and 6h CD103+ NY-ESO-1 clone
+
+# 6 hours post T cell activation
+all_genes <- read.csv("/stopgap/donglab/ling/R/megat/all_genes.csv")
+colnames(all_genes) <- c("Protein_acronym",	"CD103+_SSX-2_T_cell_clone",	
+                         "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
+                         "CD103-_ESO-1_T_cell_clone")
+
+genes <- all_genes[,c(1, 4)]
+
+genes <- genes[genes$`CD103+_ESO-1_T_cell_clone` > 0,]
+
+genes$Entrez.Gene <- mapIds(org.Hs.eg.db, keys=as.character(genes$Protein_acronym), keytype="SYMBOL", column="ENTREZID")
+
+genes <- genes[is.na(genes$Entrez.Gene)==FALSE,]
+
+genes <- genes[!duplicated(genes$Entrez.Gene),]
+
+geneset <- as.character(genes$Entrez.Gene)
+
+x <- enrichPathway(gene=geneset, pvalueCutoff = 0.01, qvalueCutoff = 0.05, readable=TRUE)
+
+dim(x)
+
+# 3 hours post T cell activation
+
+all_genes <- read.csv("/stopgap/donglab/ling/R/megat/all_genes_3h.csv")
+colnames(all_genes) <- c("Protein_acronym",	"CD103+_SSX-2_T_cell_clone",	
+                         "CD103-_SSX-2_T_cell_clone",	"CD103+_ESO-1_T_cell_clone",
+                         "CD103-_ESO-1_T_cell_clone")
+
+genes <- all_genes[,c(1, 4)]
+
+genes <- genes[genes$`CD103+_ESO-1_T_cell_clone` > 0,]
+
+genes$Entrez.Gene <- mapIds(org.Hs.eg.db, keys=as.character(genes$Protein_acronym), keytype="SYMBOL", column="ENTREZID")
+
+genes <- genes[is.na(genes$Entrez.Gene)==FALSE,]
+
+genes <- genes[!duplicated(genes$Entrez.Gene),]
+
+geneset <- as.character(genes$Entrez.Gene)
+
+y <- enrichPathway(gene=geneset, pvalueCutoff = 0.01, qvalueCutoff = 0.05, readable=TRUE)
+
+dim(y)
+
+
+# merge 3h and 6h results
+
+# can't get showCategory to work (only selected pathways) when merge total 3h and 6h enrichResult objects
+# so need to subset 3h and 6h first, then merge
+
+# pathway names from previous network plots
+pathways <- c("Antiviral mechanism by IFN-stimulated genes" , 
+              "TCR signaling",
+              "Diseases of signal transduction",
+              "Integrin signaling",
+              "p130Cas linkage to MAPK signaling for integrins",
+              "Integrin alphaIIb beta3 signaling",
+              "Oncogenic MAPK signaling",
+              "Selenoamino acid metabolism",
+              "GRB2:SOS provides linkage to MAPK signaling for Integrins ",
+              "Metabolism of amino acids and derivatives",
+              "The citric acid (TCA) cycle and respiratory electron transport")
+
+# get IDs for selected pathways
+h3 <- data.frame(y$ID, y$Description)
+h6 <- data.frame(x$ID, x$Description)
+
+ids_3h <- h3[h3$y.Description %in% pathways,]
+ids_6h <- h6[h6$x.Description %in% pathways,]
+
+# subset enrichResult objects based on selected IDs
+x@result <-  x@result[x@result$ID %in% ids_6h$x.ID,]
+y@result <- y@result[y@result$ID %in% ids_3h$y.ID,]
+
+# merge to form compareClusterResult and plot all pathways
+z <- merge_result(list(h3=y, h6=x))
+
+pdf("figures/network_plot_ny-eso-1_3h_6h_combined.pdf", width=10, height=11)
+cnetplot(z, showCategory = 20, circular = FALSE, layout="kk")
+dev.off()
