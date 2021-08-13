@@ -118,6 +118,8 @@ label$angle <- ifelse(angle < -90, angle + 180, angle)
 label <- mutate(label, lab = paste(Var1, "(",Freq,")"))
 
 # plot with pathway names as labels
+
+pdf("figures/circular_barplot_all_209_31_overlap_3h.pdf", width=10, height=6)
 ggplot(df2, aes(x=as.factor(id), y=Freq, fill=category)) +
   geom_bar(stat="identity", alpha=0.5) +
   theme_minimal() +
@@ -127,7 +129,7 @@ ggplot(df2, aes(x=as.factor(id), y=Freq, fill=category)) +
         plot.margin=unit(rep(-1,4), "cm")) +
   coord_polar() +
   geom_text(data=label, aes(x=id, y=Freq-7.5, label=lab, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label$angle, inherit.aes = FALSE )
-
+dev.off()
 
 # plotting just overlap_all_209 for circular barplot
 # add category
