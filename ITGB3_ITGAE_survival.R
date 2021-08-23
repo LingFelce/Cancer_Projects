@@ -98,7 +98,10 @@ summary(res.cut)
 
 # plot cutpoint for ITGAE
 # palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
 plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
 
 # categorise variables
 res.cat <- surv_categorize(res.cut)
