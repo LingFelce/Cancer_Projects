@@ -112,9 +112,15 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-mel$DP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888, "high", "low")
-mel$TP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512, "high", "low")
-mel$AP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512 & mel$CD8A > 554.4929, "high", "low")
+# mel$DP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888, "high", "low")
+# mel$TP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512, "high", "low")
+# mel$AP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512 & mel$CD8A > 554.4929, "high", "low")
+
+# need to set threshold for "positive" expression?
+mel$DP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100, "positive", "negative")
+mel$TP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100 & mel$CD3E > 100, "positive", "negative")
+mel$AP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100 & mel$CD3E > 100 & mel$CD8A > 100, "positive", "negative")
+
 
 dp_fit <- survfit(Surv(time, status) ~DP, data = mel)
 dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
