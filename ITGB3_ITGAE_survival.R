@@ -8,11 +8,14 @@ library(RTCGA)
 library(survminer)
 library(survival)
 
-#------ Skin cutaneous melanoma
+setwd("/stopgap/donglab/ling/R/megat/tcga/")
+
 # follow tutorial for downloading dataset https://bioc.ism.ac.jp/packages/3.2/bioc/vignettes/RTCGA/inst/doc/RTCGA_Tutotial.html
 # follow tutorial for survival curve generation http://www.sthda.com/english/wiki/survival-analysis-basics
 # follow tutorial for setting group of genes https://github.com/kassambara/survminer/issues/41
+# check for cancer acronyms http://gdac.broadinstitute.org/
 
+#------ Skin cutaneous melanoma--------------------
 # # download clinical data (default)
 # downloadTCGA(cancerTypes = "SKCM", destDir = "tcga")
 
@@ -21,7 +24,8 @@ skcm_datasets <- data.frame(checkTCGA(what = "DataSets", cancerType = "SKCM"))
 skcm_datasets[9,]
 
 # download RNA-Seq data
-downloadTCGA(cancerTypes = "SKCM", destDir = "tcga", dataSet = "SKCM.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2016012800.0.0.tar.gz")
+# need to download RNA data to separate folder
+downloadTCGA(cancerTypes = "SKCM", destDir = "skcm", dataSet = "SKCM.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2016012800.0.0.tar.gz")
 
 # # tidy clinical data
 # list.files("tcga/") %>%
@@ -41,9 +45,9 @@ downloadTCGA(cancerTypes = "SKCM", destDir = "tcga", dataSet = "SKCM.Merge_rnase
 clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/skcm_tcga_pan_can_atlas_2018_clinical_data.tsv")
 
 # tidy RNA-Seq data
-list.files("tcga/") %>%
+list.files("skcm/") %>%
   grep("rnaseq", x = ., value = TRUE) %>%
-  file.path("tcga", .) -> folder
+  file.path("skcm", .) -> folder
 
 folder %>%
   list.files() %>%
@@ -131,5 +135,321 @@ tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 tp_plot
 
 ap_fit <- survfit(Surv(time, status) ~AP, data = mel)
+ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ap_plot
+
+#------ Lung adenocarcinoma--------------------
+
+# check what dataset available for lung adenocarcinoma
+luad_datasets <- data.frame(checkTCGA(what = "DataSets", cancerType = "LUAD"))
+# looking for something like this
+# rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data
+luad_datasets[25,]
+# copy and paste into function below
+
+# download RNA-Seq data
+downloadTCGA(cancerTypes = "LUAD", destDir = "luad", dataSet = "LUAD.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2016012800.0.0.tar.gz")
+
+# clinical data columns really confusing - download from cBioPortal website instead
+# https://www.cbioportal.org/study/summary?id=luad_tcga_pan_can_atlas_2018
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/luad_tcga_pan_can_atlas_2018_clinical_data.tsv")
+
+# tidy RNA-Seq data
+list.files("luad/") %>%
+  grep("rnaseq", x = ., value = TRUE) %>%
+  file.path("luad", .) -> folder
+
+folder %>%
+  list.files() %>%
+  grep("illumina", x = ., value=TRUE) %>%
+  file.path(folder, .) %>%
+  readTCGA(path = ., "rnaseq") -> rna
+
+dim(rna)
+
+# make patient barcodes the same for RNA-Seq (match clinical)
+split <- str_split_fixed(rna$bcr_patient_barcode, "-", 7)
+barcodes <- as.data.frame(split)
+barcodes <- mutate(barcodes, barcode = paste(V1, V2, V3, sep = "-"))
+rna$patient.bcr_patient_barcode <- barcodes$barcode
+
+# change column headings in clinical
+names(clin)[names(clin) == "Months.of.disease.specific.survival"] <- "time"
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$Disease.specific.Survival.status), "1",
+                      ifelse(grepl("0", clin$Disease.specific.Survival.status), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+# check survival curve - 96 observations deleted, no survival info?
+fit <- survfit(Surv(time, status) ~ Sex, data = clin)
+print(fit)
+
+ggsurvplot(fit,
+           pval = TRUE, conf.int = TRUE,
+           risk.table = TRUE, # Add risk table
+           risk.table.col = "strata", # Change risk table color by groups
+           linetype = "strata", # Change line type by groups
+           surv.median.line = "hv", # Specify median survival
+           ggtheme = theme_bw(), # Change ggplot2 theme
+           palette = c("#E7B800", "#2E9FDF"))
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3",]
+genes <- genes[,c(19, 21, 22, 24)]
+# remove numbers after gene names (Entrez IDs?)
+colnames(genes) <- gsub("\\|.*", "", colnames(genes))
+genes$Patient.ID <- rna$patient.bcr_patient_barcode
+
+# merge clinical and genes data
+luad <- clin[,c("Patient.ID", "time", "status")]
+luad <- merge(luad, genes, by="Patient.ID")
+luad <- na.omit(luad)
+# 524 patients
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(luad, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# add new columns 
+# DP - double positive - ITGB3+ITGAE+
+# TP - triple positive - ITB3+ITGAE+CD3E+
+# AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
+# numerical values from summary(res.cut)
+luad$DP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370, "high", "low")
+luad$TP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370 & luad$CD3E > 99.9165, "high", "low")
+luad$AP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370 & luad$CD3E > 99.9165 & luad$CD8A > 256.5284, "high", "low")
+
+dp_fit <- survfit(Surv(time, status) ~DP, data = luad)
+dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+dp_plot
+
+tp_fit <- survfit(Surv(time, status) ~TP, data = luad)
+tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+tp_plot
+
+ap_fit <- survfit(Surv(time, status) ~AP, data = luad)
+ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ap_plot
+
+#------ Lung squamous cell carcinoma--------------------
+
+# check what dataset available for lung squamous cell carcinoma
+lusc_datasets <- data.frame(checkTCGA(what = "DataSets", cancerType = "LUSC"))
+# looking for something like this
+# rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data
+lusc_datasets[18,]
+
+# download RNA-Seq data
+downloadTCGA(cancerTypes = "LUSC", destDir = "lusc", dataSet = "LUSC.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2016012800.0.0.tar.gz")
+
+# clinical data columns really confusing - download from cBioPortal website instead
+# https://www.cbioportal.org/study/summary?id=lusc_tcga_pan_can_atlas_2018
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/lusc_tcga_pan_can_atlas_2018_clinical_data.tsv")
+
+# tidy RNA-Seq data
+list.files("lusc/") %>%
+  grep("rnaseq", x = ., value = TRUE) %>%
+  file.path("lusc", .) -> folder
+
+folder %>%
+  list.files() %>%
+  grep("illumina", x = ., value=TRUE) %>%
+  file.path(folder, .) %>%
+  readTCGA(path = ., "rnaseq") -> rna
+
+dim(rna)
+
+# make patient barcodes the same for RNA-Seq (match clinical)
+split <- str_split_fixed(rna$bcr_patient_barcode, "-", 7)
+barcodes <- as.data.frame(split)
+barcodes <- mutate(barcodes, barcode = paste(V1, V2, V3, sep = "-"))
+rna$patient.bcr_patient_barcode <- barcodes$barcode
+
+# change column headings in clinical
+names(clin)[names(clin) == "Months.of.disease.specific.survival"] <- "time"
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$Disease.specific.Survival.status), "1",
+                      ifelse(grepl("0", clin$Disease.specific.Survival.status), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+# check survival curve - 96 observations deleted, no survival info?
+fit <- survfit(Surv(time, status) ~ Sex, data = clin)
+print(fit)
+
+ggsurvplot(fit,
+           pval = TRUE, conf.int = TRUE,
+           risk.table = TRUE, # Add risk table
+           risk.table.col = "strata", # Change risk table color by groups
+           linetype = "strata", # Change line type by groups
+           surv.median.line = "hv", # Specify median survival
+           ggtheme = theme_bw(), # Change ggplot2 theme
+           palette = c("#E7B800", "#2E9FDF"))
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3",]
+genes <- genes[,c(19, 21, 22, 24)]
+# remove numbers after gene names (Entrez IDs?)
+colnames(genes) <- gsub("\\|.*", "", colnames(genes))
+genes$Patient.ID <- rna$patient.bcr_patient_barcode
+
+# merge clinical and genes data
+lusc <- clin[,c("Patient.ID", "time", "status")]
+lusc <- merge(lusc, genes, by="Patient.ID")
+lusc <- na.omit(lusc)
+# 469 patients
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(lusc, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# add new columns 
+# DP - double positive - ITGB3+ITGAE+
+# TP - triple positive - ITB3+ITGAE+CD3E+
+# AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
+# numerical values from summary(res.cut)
+lusc$DP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153, "high", "low")
+lusc$TP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153 & lusc$CD3E > 82.1075, "high", "low")
+lusc$AP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153 & lusc$CD3E > 82.1075 & lusc$CD8A > 759.5419, "high", "low")
+
+dp_fit <- survfit(Surv(time, status) ~DP, data = lusc)
+dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+dp_plot
+
+tp_fit <- survfit(Surv(time, status) ~TP, data = lusc)
+tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+tp_plot
+
+ap_fit <- survfit(Surv(time, status) ~AP, data = lusc)
+ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ap_plot
+
+#------ Colorectal adenocarcinoma--------------------
+
+# check what dataset available for colorectal adenocarcinoma
+coadread_datasets <- data.frame(checkTCGA(what = "DataSets", cancerType = "COADREAD"))
+# looking for something like this
+# rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data
+coadread_datasets[31,]
+
+# download RNA-Seq data
+downloadTCGA(cancerTypes = "COADREAD", destDir = "coadread", dataSet = "COADREAD.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2016012800.0.0.tar.gz")
+
+# clinical data columns really confusing - download from cBioPortal website instead
+# https://www.cbioportal.org/study/summary?id=coadread_tcga_pan_can_atlas_2018
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/coadread_tcga_pan_can_atlas_2018_clinical_data.tsv")
+
+# tidy RNA-Seq data
+list.files("coadread/") %>%
+  grep("rnaseq", x = ., value = TRUE) %>%
+  file.path("coadread", .) -> folder
+
+folder %>%
+  list.files() %>%
+  grep("illumina", x = ., value=TRUE) %>%
+  file.path(folder, .) %>%
+  readTCGA(path = ., "rnaseq") -> rna
+
+dim(rna)
+
+# make patient barcodes the same for RNA-Seq (match clinical)
+split <- str_split_fixed(rna$bcr_patient_barcode, "-", 7)
+barcodes <- as.data.frame(split)
+barcodes <- mutate(barcodes, barcode = paste(V1, V2, V3, sep = "-"))
+rna$patient.bcr_patient_barcode <- barcodes$barcode
+
+# change column headings in clinical
+names(clin)[names(clin) == "Months.of.disease.specific.survival"] <- "time"
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$Disease.specific.Survival.status), "1",
+                      ifelse(grepl("0", clin$Disease.specific.Survival.status), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+# check survival curve - 96 observations deleted, no survival info?
+fit <- survfit(Surv(time, status) ~ Sex, data = clin)
+print(fit)
+
+ggsurvplot(fit,
+           pval = TRUE, conf.int = TRUE,
+           risk.table = TRUE, # Add risk table
+           risk.table.col = "strata", # Change risk table color by groups
+           linetype = "strata", # Change line type by groups
+           surv.median.line = "hv", # Specify median survival
+           ggtheme = theme_bw(), # Change ggplot2 theme
+           palette = c("#E7B800", "#2E9FDF"))
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3",]
+genes <- genes[,c(19, 21, 22, 24)]
+# remove numbers after gene names (Entrez IDs?)
+colnames(genes) <- gsub("\\|.*", "", colnames(genes))
+genes$Patient.ID <- rna$patient.bcr_patient_barcode
+
+# merge clinical and genes data
+coadread <- clin[,c("Patient.ID", "time", "status")]
+coadread <- merge(coadread, genes, by="Patient.ID")
+coadread <- na.omit(coadread)
+# 469 patients
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(coadread, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# add new columns 
+# DP - double positive - ITGB3+ITGAE+
+# TP - triple positive - ITB3+ITGAE+CD3E+
+# AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
+# numerical values from summary(res.cut)
+coadread$DP <- ifelse(coadread$ITGB3 > 108.2569 & coadread$ITGAE > 288.6153, "high", "low")
+coadread$TP <- ifelse(coadread$ITGB3 > 108.2569 & coadread$ITGAE > 288.6153 & coadread$CD3E > 82.1075, "high", "low")
+coadread$AP <- ifelse(coadread$ITGB3 > 108.2569 & coadread$ITGAE > 288.6153 & coadread$CD3E > 82.1075 & coadread$CD8A > 759.5419, "high", "low")
+
+dp_fit <- survfit(Surv(time, status) ~DP, data = coadread)
+dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+dp_plot
+
+tp_fit <- survfit(Surv(time, status) ~TP, data = coadread)
+tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+tp_plot
+
+ap_fit <- survfit(Surv(time, status) ~AP, data = coadread)
 ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 ap_plot
