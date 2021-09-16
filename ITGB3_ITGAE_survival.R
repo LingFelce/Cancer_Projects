@@ -116,14 +116,14 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-# mel$DP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888, "high", "low")
-# mel$TP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512, "high", "low")
-# mel$AP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512 & mel$CD8A > 554.4929, "high", "low")
+mel$DP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888, "high", "low")
+mel$TP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512, "high", "low")
+mel$AP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512 & mel$CD8A > 554.4929, "high", "low")
 
-# need to set threshold for "positive" expression?
-mel$DP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100, "positive", "negative")
-mel$TP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100 & mel$CD3E > 100, "positive", "negative")
-mel$AP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100 & mel$CD3E > 100 & mel$CD8A > 100, "positive", "negative")
+# # need to set threshold for "positive" expression?
+# mel$DP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100, "positive", "negative")
+# mel$TP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100 & mel$CD3E > 100, "positive", "negative")
+# mel$AP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100 & mel$CD3E > 100 & mel$CD8A > 100, "positive", "negative")
 
 
 dp_fit <- survfit(Surv(time, status) ~DP, data = mel)
@@ -349,6 +349,7 @@ ap_fit <- survfit(Surv(time, status) ~AP, data = lusc)
 ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 ap_plot
 
+
 #------ Colorectal adenocarcinoma--------------------
 
 # check what dataset available for colorectal adenocarcinoma
@@ -415,7 +416,7 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 coadread <- clin[,c("Patient.ID", "time", "status")]
 coadread <- merge(coadread, genes, by="Patient.ID")
 coadread <- na.omit(coadread)
-# 469 patients
+# 390 patients
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(coadread, time = "time", event = "status", 
@@ -438,9 +439,9 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-coadread$DP <- ifelse(coadread$ITGB3 > 108.2569 & coadread$ITGAE > 288.6153, "high", "low")
-coadread$TP <- ifelse(coadread$ITGB3 > 108.2569 & coadread$ITGAE > 288.6153 & coadread$CD3E > 82.1075, "high", "low")
-coadread$AP <- ifelse(coadread$ITGB3 > 108.2569 & coadread$ITGAE > 288.6153 & coadread$CD3E > 82.1075 & coadread$CD8A > 759.5419, "high", "low")
+coadread$DP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790, "high", "low")
+coadread$TP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790 & coadread$CD3E > 342.0922, "high", "low")
+coadread$AP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790 & coadread$CD3E > 342.0922 & coadread$CD8A > 318.8378, "high", "low")
 
 dp_fit <- survfit(Surv(time, status) ~DP, data = coadread)
 dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
@@ -451,5 +452,110 @@ tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 tp_plot
 
 ap_fit <- survfit(Surv(time, status) ~AP, data = coadread)
+ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ap_plot
+
+#------ Mesothelioma--------------------
+
+# check what dataset available for mesothelioma
+meso_datasets <- data.frame(checkTCGA(what = "DataSets", cancerType = "MESO"))
+# looking for something like this
+# rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data
+meso_datasets[8,]
+
+# download RNA-Seq data
+downloadTCGA(cancerTypes = "MESO", destDir = "meso", dataSet = "MESO.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2016012800.0.0.tar.gz")
+
+# clinical data columns really confusing - download from cBioPortal website instead
+# https://www.cbioportal.org/study/summary?id=meso_tcga_pan_can_atlas_2018
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/meso_tcga_pan_can_atlas_2018_clinical_data.tsv")
+
+# tidy RNA-Seq data
+list.files("meso/") %>%
+  grep("rnaseq", x = ., value = TRUE) %>%
+  file.path("meso", .) -> folder
+
+folder %>%
+  list.files() %>%
+  grep("illumina", x = ., value=TRUE) %>%
+  file.path(folder, .) %>%
+  readTCGA(path = ., "rnaseq") -> rna
+
+dim(rna)
+
+# make patient barcodes the same for RNA-Seq (match clinical)
+split <- str_split_fixed(rna$bcr_patient_barcode, "-", 7)
+barcodes <- as.data.frame(split)
+barcodes <- mutate(barcodes, barcode = paste(V1, V2, V3, sep = "-"))
+rna$patient.bcr_patient_barcode <- barcodes$barcode
+
+# change column headings in clinical
+names(clin)[names(clin) == "Months.of.disease.specific.survival"] <- "time"
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$Disease.specific.Survival.status), "1",
+                      ifelse(grepl("0", clin$Disease.specific.Survival.status), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+# check survival curve - 96 observations deleted, no survival info?
+fit <- survfit(Surv(time, status) ~ Sex, data = clin)
+print(fit)
+
+ggsurvplot(fit,
+           pval = TRUE, conf.int = TRUE,
+           risk.table = TRUE, # Add risk table
+           risk.table.col = "strata", # Change risk table color by groups
+           linetype = "strata", # Change line type by groups
+           surv.median.line = "hv", # Specify median survival
+           ggtheme = theme_bw(), # Change ggplot2 theme
+           palette = c("#E7B800", "#2E9FDF"))
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3",]
+genes <- genes[,c(19, 21, 22, 24)]
+# remove numbers after gene names (Entrez IDs?)
+colnames(genes) <- gsub("\\|.*", "", colnames(genes))
+genes$Patient.ID <- rna$patient.bcr_patient_barcode
+
+# merge clinical and genes data
+meso <- clin[,c("Patient.ID", "time", "status")]
+meso <- merge(meso, genes, by="Patient.ID")
+meso <- na.omit(meso)
+# 66 patients
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(meso, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# add new columns 
+# DP - double positive - ITGB3+ITGAE+
+# TP - triple positive - ITB3+ITGAE+CD3E+
+# AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
+# numerical values from summary(res.cut)
+meso$DP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547, "high", "low")
+meso$TP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547 & meso$CD3E > 215.5353, "high", "low")
+meso$AP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547 & meso$CD3E > 215.5353 & meso$CD8A > 71.0280, "high", "low")
+
+dp_fit <- survfit(Surv(time, status) ~DP, data = meso)
+dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+dp_plot
+
+tp_fit <- survfit(Surv(time, status) ~TP, data = meso)
+tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+tp_plot
+
+ap_fit <- survfit(Surv(time, status) ~AP, data = meso)
 ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 ap_plot
