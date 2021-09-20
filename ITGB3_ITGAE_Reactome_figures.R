@@ -461,6 +461,18 @@ ggplot(ssx_metabolism_genes[ssx_metabolism_genes$x.Description %in% d,],
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
 
+pdf("figures/barplot_lfc_ssx-2_tca_cycle.pdf", width=8, height=5)
+d <- "The citric acid (TCA) cycle and respiratory electron transport"
+ggplot(ssx_metabolism_genes[ssx_metabolism_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+                    values=c("#ff2600", "#fc9483")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
 # eso1
 pdf("figures/barplot_lfc_ny-eso-1_metabolism_of_amino_acids.pdf", width=8, height=5)
 d <- "Metabolism of amino acids and derivatives"
@@ -485,6 +497,20 @@ ggplot(eso_metabolism_genes[eso_metabolism_genes$x.Description %in% d,],
   theme_classic() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
+
+pdf("figures/barplot_lfc_ny-eso-1_tca_cycle.pdf", width=8, height=5)
+d <- "The citric acid (TCA) cycle and respiratory electron transport"
+ggplot(eso_metabolism_genes[eso_metabolism_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"),
+                    values=c("#0432ff", "#a4d7f8")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+# do all barplots
 # # ssx2
 # plot_list <- list()
 # for (i in 1:nlevels(ssx_metabolism_genes$x.Description)){
@@ -554,43 +580,104 @@ effector_genes$x.Description <- as.factor(effector_genes$x.Description)
 ssx_effector_genes <- effector_genes[effector_genes$name %like% "SSX",]
 eso_effector_genes <- effector_genes[effector_genes$name %like% "ESO",]
 
+# plot specific barplots
 # ssx2
-plot_list <- list()
-for (i in 1:nlevels(ssx_effector_genes$x.Description)){
-  d <- levels(ssx_effector_genes$x.Description)[i]
-  p <- ggplot(ssx_effector_genes[ssx_effector_genes$x.Description %in% d,], 
-              aes(x=Gene, y=value, fill=name)) +
-    geom_bar(stat="identity") +
-    scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
-                      values=c("#ff2600", "#fc9483")) +
-    labs(title=d,x="Genes", y = "Log2 fold change") +
-    theme_classic() +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  plot_list[[i]] <- p
-}
 
-for (i in 1:nlevels(ssx_effector_genes$x.Description)) {
-  print(plot_list[[i]])
-}
+# remove dodgy LAT and GRAP2 isoform
+ssx_effector_genes$row_number <- c(1:404)
+ssx_effector_genes <- ssx_effector_genes[-c(79, 82,167, 179),]
 
-# eso-1
-plot_list <- list()
-for (i in 1:nlevels(eso_effector_genes$x.Description)){
-  d <- levels(eso_effector_genes$x.Description)[i]
-  p <- ggplot(eso_effector_genes[eso_effector_genes$x.Description %in% d,], 
-              aes(x=Gene, y=value, fill=name)) +
-    geom_bar(stat="identity") +
-    scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"), 
-                      values=c("#0432ff", "#a4d7f8")) +
-    labs(title=d,x="Genes", y = "Log2 fold change") +
-    theme_classic() +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  plot_list[[i]] <- p
-}
+pdf("figures/barplot_lfc_ssx-2_tcr_signaling.pdf", width=8, height=5)
+d <- "TCR signaling"
+ggplot(ssx_effector_genes[ssx_effector_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+                    values=c("#ff2600", "#fc9483")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
 
-for (i in 1:nlevels(eso_effector_genes$x.Description)) {
-  print(plot_list[[i]])
-}
+pdf("figures/barplot_lfc_ssx-2_grb2_linkage.pdf", width=8, height=5)
+d <- "GRB2:SOS provides linkage to MAPK signaling for Integrins "
+ggplot(ssx_effector_genes[ssx_effector_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+                    values=c("#ff2600", "#fc9483")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+# eso1
+
+# remove dodgy LAT isoform
+eso_effector_genes$row_number <- c(1:404)
+eso_effector_genes <- eso_effector_genes[-c(79, 82,167,171),]
+
+pdf("figures/barplot_lfc_ny-eso-1_tcr_signaling.pdf", width=8, height=5)
+d <- "TCR signaling"
+ggplot(eso_effector_genes[eso_effector_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"), 
+                    values=c("#0432ff", "#a4d7f8")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+pdf("figures/barplot_lfc_ny-eso-1_grb2_linkage.pdf", width=8, height=5)
+d <- "GRB2:SOS provides linkage to MAPK signaling for Integrins "
+ggplot(eso_effector_genes[eso_effector_genes$x.Description %in% d,], 
+       aes(x=Gene, y=value, fill=name)) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"), 
+                    values=c("#0432ff", "#a4d7f8")) +
+  labs(title=d,x="Genes", y = "Log2 fold change") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+# # ssx2
+# plot_list <- list()
+# for (i in 1:nlevels(ssx_effector_genes$x.Description)){
+#   d <- levels(ssx_effector_genes$x.Description)[i]
+#   p <- ggplot(ssx_effector_genes[ssx_effector_genes$x.Description %in% d,], 
+#               aes(x=Gene, y=value, fill=name)) +
+#     geom_bar(stat="identity") +
+#     scale_fill_manual(breaks = c("CD103+_SSX-2_T_cell_clone", "CD103-_SSX-2_T_cell_clone"), 
+#                       values=c("#ff2600", "#fc9483")) +
+#     labs(title=d,x="Genes", y = "Log2 fold change") +
+#     theme_classic() +
+#     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+#   plot_list[[i]] <- p
+# }
+# 
+# for (i in 1:nlevels(ssx_effector_genes$x.Description)) {
+#   print(plot_list[[i]])
+# }
+# 
+# # eso-1
+# plot_list <- list()
+# for (i in 1:nlevels(eso_effector_genes$x.Description)){
+#   d <- levels(eso_effector_genes$x.Description)[i]
+#   p <- ggplot(eso_effector_genes[eso_effector_genes$x.Description %in% d,], 
+#               aes(x=Gene, y=value, fill=name)) +
+#     geom_bar(stat="identity") +
+#     scale_fill_manual(breaks = c("CD103+_ESO-1_T_cell_clone", "CD103-_ESO-1_T_cell_clone"), 
+#                       values=c("#0432ff", "#a4d7f8")) +
+#     labs(title=d,x="Genes", y = "Log2 fold change") +
+#     theme_classic() +
+#     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+#   plot_list[[i]] <- p
+# }
+# 
+# for (i in 1:nlevels(eso_effector_genes$x.Description)) {
+#   print(plot_list[[i]])
+# }
 
 # metabolism
 metabolism_6h <- metabolism[metabolism$Timepoint %like% "6h",]
