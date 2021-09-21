@@ -559,3 +559,211 @@ tp_plot
 ap_fit <- survfit(Surv(time, status) ~AP, data = meso)
 ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 ap_plot
+
+#------ Kidney renal clear cell carcinoma--------------------
+# check what dataset available 
+kirc_datasets <- data.frame(checkTCGA(what = "DataSets", cancerType = "KIRC"))
+# looking for something like this
+# rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data
+kirc_datasets[24,]
+
+# download RNA-Seq data
+# need to download RNA data to separate folder
+downloadTCGA(cancerTypes = "KIRC", destDir = "kirc", 
+             dataSet = "KIRC.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2016012800.0.0.tar.gz")
+
+# clinical data columns really confusing - download from cBioPortal website instead
+# https://www.cbioportal.org/study/summary?id=kirc_tcga_pan_can_atlas_2018
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/kirc_tcga_pan_can_atlas_2018_clinical_data.tsv")
+
+# tidy RNA-Seq data
+list.files("kirc/") %>%
+  grep("rnaseq", x = ., value = TRUE) %>%
+  file.path("kirc", .) -> folder
+
+folder %>%
+  list.files() %>%
+  grep("illumina", x = ., value=TRUE) %>%
+  file.path(folder, .) %>%
+  readTCGA(path = ., "rnaseq") -> rna
+
+dim(rna)
+
+# make patient barcodes the same for RNA-Seq (match clinical)
+split <- str_split_fixed(rna$bcr_patient_barcode, "-", 7)
+barcodes <- as.data.frame(split)
+barcodes <- mutate(barcodes, barcode = paste(V1, V2, V3, sep = "-"))
+rna$patient.bcr_patient_barcode <- barcodes$barcode
+
+# change column headings in clinical
+names(clin)[names(clin) == "Months.of.disease.specific.survival"] <- "time"
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$Disease.specific.Survival.status), "1",
+                      ifelse(grepl("0", clin$Disease.specific.Survival.status), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+# check survival curve
+fit <- survfit(Surv(time, status) ~ Sex, data = clin)
+print(fit)
+
+ggsurvplot(fit,
+           pval = TRUE, conf.int = TRUE,
+           risk.table = TRUE, # Add risk table
+           risk.table.col = "strata", # Change risk table color by groups
+           linetype = "strata", # Change line type by groups
+           surv.median.line = "hv", # Specify median survival
+           ggtheme = theme_bw(), # Change ggplot2 theme
+           palette = c("#E7B800", "#2E9FDF"))
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3",]
+genes <- genes[,c(19, 21, 22, 24)]
+# remove numbers after gene names (Entrez IDs?)
+colnames(genes) <- gsub("\\|.*", "", colnames(genes))
+genes$Patient.ID <- rna$patient.bcr_patient_barcode
+
+# merge clinical and genes data
+renal <- clin[,c("Patient.ID", "time", "status")]
+renal <- merge(renal, genes, by="Patient.ID")
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(renal, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# add new columns 
+# DP - double positive - ITGB3+ITGAE+
+# TP - triple positive - ITB3+ITGAE+CD3E+
+# AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
+# numerical values from summary(res.cut)
+renal$DP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911, "high", "low")
+renal$TP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911 & renal$CD3E > 1138.4772, "high", "low")
+renal$AP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911 & renal$CD3E > 1138.4772 & renal$CD8A > 1222.6624, "high", "low")
+
+dp_fit <- survfit(Surv(time, status) ~DP, data = renal)
+dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+dp_plot
+
+tp_fit <- survfit(Surv(time, status) ~TP, data = renal)
+tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+tp_plot
+
+ap_fit <- survfit(Surv(time, status) ~AP, data = renal)
+ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ap_plot
+
+#------ Thyroid carcinoma--------------------
+# check what dataset available 
+thca_datasets <- data.frame(checkTCGA(what = "DataSets", cancerType = "THCA"))
+# looking for something like this
+# rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data
+thca_datasets[12,]
+
+# download RNA-Seq data
+# need to download RNA data to separate folder
+downloadTCGA(cancerTypes = "THCA", destDir = "thca", 
+             dataSet = "THCA.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2016012800.0.0.tar.gz")
+
+# clinical data columns really confusing - download from cBioPortal website instead
+# https://www.cbioportal.org/study/summary?id=thca_tcga_pan_can_atlas_2018
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/thca_tcga_pan_can_atlas_2018_clinical_data.tsv")
+
+# tidy RNA-Seq data
+list.files("thca/") %>%
+  grep("rnaseq", x = ., value = TRUE) %>%
+  file.path("thca", .) -> folder
+
+folder %>%
+  list.files() %>%
+  grep("illumina", x = ., value=TRUE) %>%
+  file.path(folder, .) %>%
+  readTCGA(path = ., "rnaseq") -> rna
+
+dim(rna)
+
+# make patient barcodes the same for RNA-Seq (match clinical)
+split <- str_split_fixed(rna$bcr_patient_barcode, "-", 7)
+barcodes <- as.data.frame(split)
+barcodes <- mutate(barcodes, barcode = paste(V1, V2, V3, sep = "-"))
+rna$patient.bcr_patient_barcode <- barcodes$barcode
+
+# change column headings in clinical
+names(clin)[names(clin) == "Months.of.disease.specific.survival"] <- "time"
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$Disease.specific.Survival.status), "1",
+                      ifelse(grepl("0", clin$Disease.specific.Survival.status), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+# check survival curve
+fit <- survfit(Surv(time, status) ~ Sex, data = clin)
+print(fit)
+
+ggsurvplot(fit,
+           pval = TRUE, conf.int = TRUE,
+           risk.table = TRUE, # Add risk table
+           risk.table.col = "strata", # Change risk table color by groups
+           linetype = "strata", # Change line type by groups
+           surv.median.line = "hv", # Specify median survival
+           ggtheme = theme_bw(), # Change ggplot2 theme
+           palette = c("#E7B800", "#2E9FDF"))
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3",]
+genes <- genes[,c(19, 21, 22, 24)]
+# remove numbers after gene names (Entrez IDs?)
+colnames(genes) <- gsub("\\|.*", "", colnames(genes))
+genes$Patient.ID <- rna$patient.bcr_patient_barcode
+
+# merge clinical and genes data
+thy <- clin[,c("Patient.ID", "time", "status")]
+thy <- merge(thy, genes, by="Patient.ID")
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(thy, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# add new columns 
+# DP - double positive - ITGB3+ITGAE+
+# TP - triple positive - ITB3+ITGAE+CD3E+
+# AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
+# numerical values from summary(res.cut)
+thy$DP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907, "high", "low")
+thy$TP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907 & thy$CD3E > 38.7393, "high", "low")
+thy$AP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907 & thy$CD3E > 38.7393 & thy$CD8A > 59.2700, "high", "low")
+
+dp_fit <- survfit(Surv(time, status) ~DP, data = thy)
+dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+dp_plot
+
+tp_fit <- survfit(Surv(time, status) ~TP, data = thy)
+tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+tp_plot
+
+ap_fit <- survfit(Surv(time, status) ~AP, data = thy)
+ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+ap_plot
