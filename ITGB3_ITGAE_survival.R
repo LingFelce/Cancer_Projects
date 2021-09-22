@@ -116,9 +116,9 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-mel$DP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888, "high", "low")
-mel$TP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512, "high", "low")
-mel$AP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512 & mel$CD8A > 554.4929, "high", "low")
+# mel$DP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888, "high", "low")
+# mel$TP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512, "high", "low")
+# mel$AP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4512 & mel$CD8A > 554.4929, "high", "low")
 
 # # need to set threshold for "positive" expression?
 # mel$DP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100, "positive", "negative")
@@ -126,17 +126,35 @@ mel$AP <- ifelse(mel$ITGB3 > 6992.3114 & mel$ITGAE > 123.5888 & mel$CD3E > 279.4
 # mel$AP <- ifelse(mel$ITGB3 > 100 & mel$ITGAE > 100 & mel$CD3E > 100 & mel$CD8A > 100, "positive", "negative")
 
 
-dp_fit <- survfit(Surv(time, status) ~DP, data = mel)
-dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-dp_plot
+# dp_fit <- survfit(Surv(time, status) ~DP, data = mel)
+# dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# dp_plot
+# 
+# tp_fit <- survfit(Surv(time, status) ~TP, data = mel)
+# tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# tp_plot
+# 
+# ap_fit <- survfit(Surv(time, status) ~AP, data = mel)
+# ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# ap_plot
 
-tp_fit <- survfit(Surv(time, status) ~TP, data = mel)
-tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-tp_plot
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$DP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high", "High", "Low")
+fit <- survfit(Surv(time, status) ~DP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-ap_fit <- survfit(Surv(time, status) ~AP, data = mel)
-ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-ap_plot
+res.cat$TP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high" 
+                     & res.cat$CD3E == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~TP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+
 
 #------ Lung adenocarcinoma--------------------
 
@@ -228,21 +246,38 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-luad$DP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370, "high", "low")
-luad$TP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370 & luad$CD3E > 99.9165, "high", "low")
-luad$AP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370 & luad$CD3E > 99.9165 & luad$CD8A > 256.5284, "high", "low")
+# luad$DP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370, "high", "low")
+# luad$TP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370 & luad$CD3E > 99.9165, "high", "low")
+# luad$AP <- ifelse(luad$ITGB3 > 101.5491 & luad$ITGAE > 318.5370 & luad$CD3E > 99.9165 & luad$CD8A > 256.5284, "high", "low")
+# 
+# dp_fit <- survfit(Surv(time, status) ~DP, data = luad)
+# dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# dp_plot
+# 
+# tp_fit <- survfit(Surv(time, status) ~TP, data = luad)
+# tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# tp_plot
+# 
+# ap_fit <- survfit(Surv(time, status) ~AP, data = luad)
+# ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# ap_plot
 
-dp_fit <- survfit(Surv(time, status) ~DP, data = luad)
-dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-dp_plot
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$DP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high", "High", "Low")
+fit <- survfit(Surv(time, status) ~DP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-tp_fit <- survfit(Surv(time, status) ~TP, data = luad)
-tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-tp_plot
+res.cat$TP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high" 
+                     & res.cat$CD3E == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~TP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-ap_fit <- survfit(Surv(time, status) ~AP, data = luad)
-ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-ap_plot
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
 #------ Lung squamous cell carcinoma--------------------
 
@@ -333,21 +368,38 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-lusc$DP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153, "high", "low")
-lusc$TP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153 & lusc$CD3E > 82.1075, "high", "low")
-lusc$AP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153 & lusc$CD3E > 82.1075 & lusc$CD8A > 759.5419, "high", "low")
+# lusc$DP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153, "high", "low")
+# lusc$TP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153 & lusc$CD3E > 82.1075, "high", "low")
+# lusc$AP <- ifelse(lusc$ITGB3 > 108.2569 & lusc$ITGAE > 288.6153 & lusc$CD3E > 82.1075 & lusc$CD8A > 759.5419, "high", "low")
+# 
+# dp_fit <- survfit(Surv(time, status) ~DP, data = lusc)
+# dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# dp_plot
+# 
+# tp_fit <- survfit(Surv(time, status) ~TP, data = lusc)
+# tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# tp_plot
+# 
+# ap_fit <- survfit(Surv(time, status) ~AP, data = lusc)
+# ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# ap_plot
 
-dp_fit <- survfit(Surv(time, status) ~DP, data = lusc)
-dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-dp_plot
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$DP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high", "High", "Low")
+fit <- survfit(Surv(time, status) ~DP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-tp_fit <- survfit(Surv(time, status) ~TP, data = lusc)
-tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-tp_plot
+res.cat$TP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high" 
+                     & res.cat$CD3E == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~TP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-ap_fit <- survfit(Surv(time, status) ~AP, data = lusc)
-ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-ap_plot
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
 
 #------ Colorectal adenocarcinoma--------------------
@@ -439,21 +491,38 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-coadread$DP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790, "high", "low")
-coadread$TP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790 & coadread$CD3E > 342.0922, "high", "low")
-coadread$AP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790 & coadread$CD3E > 342.0922 & coadread$CD8A > 318.8378, "high", "low")
+# coadread$DP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790, "high", "low")
+# coadread$TP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790 & coadread$CD3E > 342.0922, "high", "low")
+# coadread$AP <- ifelse(coadread$ITGB3 > 181.1232 & coadread$ITGAE > 284.2790 & coadread$CD3E > 342.0922 & coadread$CD8A > 318.8378, "high", "low")
+# 
+# dp_fit <- survfit(Surv(time, status) ~DP, data = coadread)
+# dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# dp_plot
+# 
+# tp_fit <- survfit(Surv(time, status) ~TP, data = coadread)
+# tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# tp_plot
+# 
+# ap_fit <- survfit(Surv(time, status) ~AP, data = coadread)
+# ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# ap_plot
 
-dp_fit <- survfit(Surv(time, status) ~DP, data = coadread)
-dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-dp_plot
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$DP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high", "High", "Low")
+fit <- survfit(Surv(time, status) ~DP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-tp_fit <- survfit(Surv(time, status) ~TP, data = coadread)
-tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-tp_plot
+res.cat$TP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high" 
+                     & res.cat$CD3E == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~TP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-ap_fit <- survfit(Surv(time, status) ~AP, data = coadread)
-ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-ap_plot
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
 #------ Mesothelioma--------------------
 
@@ -544,21 +613,38 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-meso$DP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547, "high", "low")
-meso$TP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547 & meso$CD3E > 215.5353, "high", "low")
-meso$AP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547 & meso$CD3E > 215.5353 & meso$CD8A > 71.0280, "high", "low")
+# meso$DP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547, "high", "low")
+# meso$TP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547 & meso$CD3E > 215.5353, "high", "low")
+# meso$AP <- ifelse(meso$ITGB3 > 27.1073 & meso$ITGAE > 176.6547 & meso$CD3E > 215.5353 & meso$CD8A > 71.0280, "high", "low")
+# 
+# dp_fit <- survfit(Surv(time, status) ~DP, data = meso)
+# dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# dp_plot
+# 
+# tp_fit <- survfit(Surv(time, status) ~TP, data = meso)
+# tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# tp_plot
+# 
+# ap_fit <- survfit(Surv(time, status) ~AP, data = meso)
+# ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# ap_plot
 
-dp_fit <- survfit(Surv(time, status) ~DP, data = meso)
-dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-dp_plot
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$DP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high", "High", "Low")
+fit <- survfit(Surv(time, status) ~DP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-tp_fit <- survfit(Surv(time, status) ~TP, data = meso)
-tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-tp_plot
+res.cat$TP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high" 
+                     & res.cat$CD3E == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~TP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-ap_fit <- survfit(Surv(time, status) ~AP, data = meso)
-ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-ap_plot
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
 #------ Kidney renal clear cell carcinoma--------------------
 # check what dataset available 
@@ -648,21 +734,38 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-renal$DP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911, "high", "low")
-renal$TP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911 & renal$CD3E > 1138.4772, "high", "low")
-renal$AP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911 & renal$CD3E > 1138.4772 & renal$CD8A > 1222.6624, "high", "low")
+# renal$DP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911, "high", "low")
+# renal$TP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911 & renal$CD3E > 1138.4772, "high", "low")
+# renal$AP <- ifelse(renal$ITGB3 > 284.7939 & renal$ITGAE > 145.6911 & renal$CD3E > 1138.4772 & renal$CD8A > 1222.6624, "high", "low")
+# 
+# dp_fit <- survfit(Surv(time, status) ~DP, data = renal)
+# dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# dp_plot
+# 
+# tp_fit <- survfit(Surv(time, status) ~TP, data = renal)
+# tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# tp_plot
+# 
+# ap_fit <- survfit(Surv(time, status) ~AP, data = renal)
+# ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# ap_plot
 
-dp_fit <- survfit(Surv(time, status) ~DP, data = renal)
-dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-dp_plot
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$DP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high", "High", "Low")
+fit <- survfit(Surv(time, status) ~DP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-tp_fit <- survfit(Surv(time, status) ~TP, data = renal)
-tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-tp_plot
+res.cat$TP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high" 
+                     & res.cat$CD3E == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~TP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-ap_fit <- survfit(Surv(time, status) ~AP, data = renal)
-ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-ap_plot
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
 #------ Thyroid carcinoma--------------------
 # check what dataset available 
@@ -752,18 +855,35 @@ head(res.cat)
 # TP - triple positive - ITB3+ITGAE+CD3E+
 # AP - all positive - ITGB3+ITGAE+CD3E+CD8A+
 # numerical values from summary(res.cut)
-thy$DP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907, "high", "low")
-thy$TP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907 & thy$CD3E > 38.7393, "high", "low")
-thy$AP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907 & thy$CD3E > 38.7393 & thy$CD8A > 59.2700, "high", "low")
+# thy$DP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907, "high", "low")
+# thy$TP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907 & thy$CD3E > 38.7393, "high", "low")
+# thy$AP <- ifelse(thy$ITGB3 > 2824.5503 & thy$ITGAE > 190.2907 & thy$CD3E > 38.7393 & thy$CD8A > 59.2700, "high", "low")
+# 
+# dp_fit <- survfit(Surv(time, status) ~DP, data = thy)
+# dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# dp_plot
+# 
+# tp_fit <- survfit(Surv(time, status) ~TP, data = thy)
+# tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# tp_plot
+# 
+# ap_fit <- survfit(Surv(time, status) ~AP, data = thy)
+# ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+# ap_plot
 
-dp_fit <- survfit(Surv(time, status) ~DP, data = thy)
-dp_plot <- ggsurvplot(dp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-dp_plot
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$DP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high", "High", "Low")
+fit <- survfit(Surv(time, status) ~DP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-tp_fit <- survfit(Surv(time, status) ~TP, data = thy)
-tp_plot <- ggsurvplot(tp_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-tp_plot
+res.cat$TP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high" 
+                     & res.cat$CD3E == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~TP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
-ap_fit <- survfit(Surv(time, status) ~AP, data = thy)
-ap_plot <- ggsurvplot(ap_fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
-ap_plot
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
