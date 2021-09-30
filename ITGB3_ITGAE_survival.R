@@ -1208,3 +1208,198 @@ res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
                      "High", "Low")
 fit <- survfit(Surv(time, status) ~AP, data = res.cat)
 ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+
+#------ LUAD OncoSG 2020--------------------
+# https://www.cbioportal.org/study?id=luad_oncosg_2020
+
+# make gene names into row names, remove EntrezIDs
+# 169 patients
+rna <- read.delim("/stopgap/donglab/ling/R/megat/tcga/luad_oncosg_2020/data_RNA_Seq_v2_expression_median.txt")
+rna <- rna[!duplicated(rna$Hugo_Symbol),]
+rownames(rna) <- NULL
+rna <- column_to_rownames(rna, var="Hugo_Symbol")
+rna <- rna[-1]
+# row names are patient IDs, column names are genes
+rna <- as.data.frame(t(rna))
+rna <- rownames_to_column(rna, var="PATIENT_ID")
+
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/luad_oncosg_2020/data_clinical_patient.txt")
+clin <- clin[-c(1:3),]
+colnames(clin) <- clin[1,]
+clin <- clin[-1,]
+
+# change column headings in clinical
+names(clin)[names(clin) == "OS_MONTHS"] <- "time"
+clin$time <- as.numeric(clin$time)
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$OS_STATUS), "1",
+                      ifelse(grepl("0", clin$OS_STATUS), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+table(clin$STAGE)
+# select stage I
+# clin <- clin[clin$STAGE == "I",]
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3E",]
+genes <- genes[,c(6, 1, 5, 4)]
+genes$PATIENT_ID <- rna$PATIENT_ID
+
+# merge clinical and genes data
+df <- clin[,c("PATIENT_ID", "time", "status")]
+df <- merge(df, genes, by="PATIENT_ID")
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(df, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+
+#------ SCLC UCologne 2015--------------------
+# https://www.cbioportal.org/study?id=sclc_ucologne_2015
+
+# make gene names into row names, remove EntrezIDs
+# 83 patients
+rna <- read.delim("/stopgap/donglab/ling/R/megat/tcga/sclc_ucologne_2015/data_RNA_Seq_expression_median.txt")
+rna <- rna[!duplicated(rna$Hugo_Symbol),]
+rownames(rna) <- NULL
+rna <- column_to_rownames(rna, var="Hugo_Symbol")
+rna <- rna[-1]
+# row names are patient IDs, column names are genes
+rna <- as.data.frame(t(rna))
+rna <- rownames_to_column(rna, var="PATIENT_ID")
+
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/sclc_ucologne_2015/data_clinical_patient.txt")
+clin <- clin[-c(1:3),]
+colnames(clin) <- clin[1,]
+clin <- clin[-1,]
+
+# change column headings in clinical
+names(clin)[names(clin) == "OS_MONTHS"] <- "time"
+clin$time <- as.numeric(clin$time)
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$OS_STATUS), "1",
+                      ifelse(grepl("0", clin$OS_STATUS), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+table(clin$UICC_TUMOR_STAGE)
+# select stage I
+# stageI <- clin[clin$UICC_TUMOR_STAGE == "I",]
+# stageIa <- clin[clin$UICC_TUMOR_STAGE == "Ia",]
+# stageIb <- clin[clin$UICC_TUMOR_STAGE == "Ib",]
+# stageIB <- clin[clin$UICC_TUMOR_STAGE == "IB",]
+# clin <- rbind(stageI, stageIa, stageIb, stageIB)
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3E",]
+genes <- genes[,c(4, 5, 1, 3)]
+genes$PATIENT_ID <- rna$PATIENT_ID
+
+# merge clinical and genes data
+df <- clin[,c("PATIENT_ID", "time", "status")]
+df <- merge(df, genes, by="PATIENT_ID")
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(df, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+
+#------ COAD CPTAC 2019--------------------
+# https://www.cbioportal.org/study/summary?id=coad_cptac_2019
+
+# make gene names into row names, remove EntrezIDs
+# 106 patients
+rna <- read.delim("/stopgap/donglab/ling/R/megat/tcga/coad_cptac_2019/data_RNA_Seq_v2_expression_median.txt")
+rna <- rna[!duplicated(rna$Hugo_Symbol),]
+rownames(rna) <- NULL
+rna <- column_to_rownames(rna, var="Hugo_Symbol")
+rna <- rna[-1]
+# row names are patient IDs, column names are genes
+rna <- as.data.frame(t(rna))
+rna <- rownames_to_column(rna, var="PATIENT_ID")
+
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/coad_cptac_2019/data_clinical_patient.txt")
+clin <- clin[-c(1:3),]
+colnames(clin) <- clin[1,]
+clin <- clin[-1,]
+
+# change column headings in clinical
+names(clin)[names(clin) == "OS_MONTHS"] <- "time"
+clin$time <- as.numeric(clin$time)
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$OS_STATUS), "1",
+                      ifelse(grepl("0", clin$OS_STATUS), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+table(clin$STAGE)
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3E",]
+genes <- genes[,c(4, 5, 1, 3)]
+genes$PATIENT_ID <- rna$PATIENT_ID
+genes$PATIENT_ID <- gsub("X", "", genes$PATIENT_ID)
+
+# merge clinical and genes data
+df <- clin[,c("PATIENT_ID", "time", "status")]
+df <- merge(df, genes, by="PATIENT_ID")
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(df, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
+                     & res.cat$CD3E == "high" & res.cat$CD8A == "high",
+                     "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
