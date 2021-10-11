@@ -95,6 +95,13 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 mel <- clin[,c("Patient.ID", "time", "status")]
 mel <- merge(mel, genes, by="Patient.ID")
 
+# tidy up
+mel <- na.omit(mel)
+dup <- mel[duplicated(mel$Patient.ID),]
+nrow(dup)
+mel <- mel[!mel$Patient.ID %in% dup$Patient.ID,]
+length(unique(mel$Patient.ID))
+
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(mel, time = "time", event = "status", 
                          variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
@@ -223,7 +230,11 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 luad <- clin[,c("Patient.ID", "time", "status")]
 luad <- merge(luad, genes, by="Patient.ID")
 luad <- na.omit(luad)
-# 524 patients
+# tidy up
+dup <- luad[duplicated(luad$Patient.ID),]
+nrow(dup)
+luad <- luad[!luad$Patient.ID %in% dup$Patient.ID,]
+length(unique(luad$Patient.ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(luad, time = "time", event = "status", 
@@ -345,7 +356,11 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 lusc <- clin[,c("Patient.ID", "time", "status")]
 lusc <- merge(lusc, genes, by="Patient.ID")
 lusc <- na.omit(lusc)
-# 469 patients
+# tidy up
+dup <- lusc[duplicated(lusc$Patient.ID),]
+nrow(dup)
+lusc <- lusc[!lusc$Patient.ID %in% dup$Patient.ID,]
+length(unique(lusc$Patient.ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(lusc, time = "time", event = "status", 
@@ -468,7 +483,11 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 coadread <- clin[,c("Patient.ID", "time", "status")]
 coadread <- merge(coadread, genes, by="Patient.ID")
 coadread <- na.omit(coadread)
-# 390 patients
+# tidy up
+dup <- coadread[duplicated(coadread$Patient.ID),]
+nrow(dup)
+coadread <- coadread[!coadread$Patient.ID %in% dup$Patient.ID,]
+length(unique(coadread$Patient.ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(coadread, time = "time", event = "status", 
@@ -589,8 +608,12 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 # merge clinical and genes data
 meso <- clin[,c("Patient.ID", "time", "status")]
 meso <- merge(meso, genes, by="Patient.ID")
+# tidy up
 meso <- na.omit(meso)
-# 66 patients
+dup <- meso[duplicated(meso$Patient.ID),]
+nrow(dup)
+meso <- meso[!meso$Patient.ID %in% dup$Patient.ID,]
+length(unique(meso$Patient.ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(meso, time = "time", event = "status", 
@@ -712,6 +735,12 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 # merge clinical and genes data
 renal <- clin[,c("Patient.ID", "time", "status")]
 renal <- merge(renal, genes, by="Patient.ID")
+# tidy up
+renal <- na.omit(renal)
+dup <- renal[duplicated(renal$Patient.ID),]
+nrow(dup)
+renal <- renal[!renal$Patient.ID %in% dup$Patient.ID,]
+length(unique(renal$Patient.ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(renal, time = "time", event = "status", 
@@ -833,6 +862,12 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 # merge clinical and genes data
 thy <- clin[,c("Patient.ID", "time", "status")]
 thy <- merge(thy, genes, by="Patient.ID")
+# tidy up
+thy <- na.omit(thy)
+dup <- thy[duplicated(thy$Patient.ID),]
+nrow(dup)
+thy <- thy[!thy$Patient.ID %in% dup$Patient.ID,]
+length(unique(thy$Patient.ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(thy, time = "time", event = "status", 
@@ -954,6 +989,12 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 # merge clinical and genes data
 renal <- clin[,c("Patient.ID", "time", "status")]
 renal <- merge(renal, genes, by="Patient.ID")
+# tidy up
+renal <- na.omit(renal)
+dup <- renal[duplicated(renal$Patient.ID),]
+nrow(dup)
+renal <- renal[!renal$Patient.ID %in% dup$Patient.ID,]
+length(unique(renal$Patient.ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(renal, time = "time", event = "status", 
@@ -1050,7 +1091,12 @@ genes$Patient.ID <- rna$patient.bcr_patient_barcode
 # merge clinical and genes data
 luad <- clin[,c("Patient.ID", "time", "status")]
 luad <- merge(luad, genes, by="Patient.ID")
+# tidy up
 luad <- na.omit(luad)
+dup <- luad[duplicated(luad$Patient.ID),]
+nrow(dup)
+luad <- luad[!luad$Patient.ID %in% dup$Patient.ID,]
+length(unique(luad$Patient.ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(luad, time = "time", event = "status", 
@@ -1250,6 +1296,13 @@ genes$PATIENT_ID <- rna$PATIENT_ID
 df <- clin[,c("PATIENT_ID", "time", "status")]
 df <- merge(df, genes, by="PATIENT_ID")
 
+# tidy up
+df <- na.omit(df)
+dup <- df[duplicated(df$PATIENT_ID),]
+nrow(dup)
+df <- df[!df$PATIENT_ID %in% dup$PATIENT_ID,]
+length(unique(df$PATIENT_ID))
+
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(df, time = "time", event = "status", 
                          variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
@@ -1317,6 +1370,13 @@ genes$PATIENT_ID <- rna$PATIENT_ID
 # merge clinical and genes data
 df <- clin[,c("PATIENT_ID", "time", "status")]
 df <- merge(df, genes, by="PATIENT_ID")
+
+# tidy up
+df <- na.omit(df)
+dup <- df[duplicated(df$PATIENT_ID),]
+nrow(dup)
+df <- df[!df$PATIENT_ID %in% dup$PATIENT_ID,]
+length(unique(df$PATIENT_ID))
 
 # determine optimal cutpoint of variables
 res.cut <- surv_cutpoint(df, time = "time", event = "status", 
@@ -1402,4 +1462,130 @@ res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
                      & res.cat$CD3E == "high" & res.cat$CD8A == "high",
                      "High", "Low")
 fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+
+
+#------ Combine LUAD subset and SCLC--------------------
+
+# tidy RNA-Seq data
+list.files("luad/") %>%
+  grep("rnaseq", x = ., value = TRUE) %>%
+  file.path("luad", .) -> folder
+
+folder %>%
+  list.files() %>%
+  grep("illumina", x = ., value=TRUE) %>%
+  file.path(folder, .) %>%
+  readTCGA(path = ., "rnaseq") -> rna
+
+dim(rna)
+
+# make patient barcodes the same for RNA-Seq (match clinical)
+split <- str_split_fixed(rna$bcr_patient_barcode, "-", 7)
+barcodes <- as.data.frame(split)
+barcodes <- mutate(barcodes, barcode = paste(V1, V2, V3, sep = "-"))
+rna$patient.bcr_patient_barcode <- barcodes$barcode
+
+# https://www.cbioportal.org/study/summary?id=luad_tcga_pan_can_atlas_2018
+clin <- read.delim("/stopgap/donglab/ling/R/megat/tcga/test_clinical_data/luad_tcga_pan_can_atlas_2018_clinical_data_t1_stage.tsv")
+
+# change column headings in clinical
+names(clin)[names(clin) == "Months.of.disease.specific.survival"] <- "time"
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin$status <- ifelse(grepl("1", clin$Disease.specific.Survival.status), "1",
+                      ifelse(grepl("0", clin$Disease.specific.Survival.status), "0", ""))
+clin$status <- as.numeric(clin$status)
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes <- rna[,colnames(rna) %like% "ITGB3|ITGAE|CD8A|CD3",]
+genes <- genes[,c(19, 21, 22, 24)]
+# remove numbers after gene names (Entrez IDs?)
+colnames(genes) <- gsub("\\|.*", "", colnames(genes))
+genes$Patient.ID <- rna$patient.bcr_patient_barcode
+
+# merge clinical and genes data
+luad <- clin[,c("Patient.ID", "time", "status")]
+luad <- merge(luad, genes, by="Patient.ID")
+# tidy up
+luad <- na.omit(luad)
+dup <- luad[duplicated(luad$Patient.ID),]
+nrow(dup)
+luad <- luad[!luad$Patient.ID %in% dup$Patient.ID,]
+length(unique(luad$Patient.ID))
+
+# determine optimal cutpoint of variables
+res.cut <- surv_cutpoint(luad, time = "time", event = "status", 
+                         variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut)
+
+# categorise variables
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+
+# make gene names into row names, remove EntrezIDs
+# 83 patients
+rna1 <- read.delim("/stopgap/donglab/ling/R/megat/tcga/sclc_ucologne_2015/data_RNA_Seq_expression_median.txt")
+rna1 <- rna1[!duplicated(rna1$Hugo_Symbol),]
+rownames(rna1) <- NULL
+rna1 <- column_to_rownames(rna1, var="Hugo_Symbol")
+rna1 <- rna1[-1]
+# row names are patient IDs, column names are genes
+rna1 <- as.data.frame(t(rna1))
+rna1 <- rownames_to_column(rna1, var="PATIENT_ID")
+
+clin1 <- read.delim("/stopgap/donglab/ling/R/megat/tcga/sclc_ucologne_2015/data_clinical_patient.txt")
+clin1 <- clin1[-c(1:3),]
+colnames(clin1) <- clin1[1,]
+clin1 <- clin1[-1,]
+
+# change column headings in clinical
+names(clin1)[names(clin1) == "OS_MONTHS"] <- "time"
+clin1$time <- as.numeric(clin1$time)
+
+# 1 is dead with tumour, 0 is alive or dead tumour free
+clin1$status <- ifelse(grepl("1", clin1$OS_STATUS), "1",
+                       ifelse(grepl("0", clin1$OS_STATUS), "0", ""))
+clin1$status <- as.numeric(clin1$status)
+
+table(clin1$UICC_TUMOR_STAGE)
+
+# genes of interest - ITGB3, ITGAE, CD8A, CD3E
+genes1 <- rna1[,colnames(rna1) %like% "ITGB3|ITGAE|CD8A|CD3E",]
+genes1 <- genes1[,c(4, 5, 1, 3)]
+genes1$PATIENT_ID <- rna1$PATIENT_ID
+
+# merge clinical and genes data
+df <- clin1[,c("PATIENT_ID", "time", "status")]
+df <- merge(df, genes1, by="PATIENT_ID")
+# tidy up
+df <- na.omit(df)
+dup <- df[duplicated(df$PATIENT_ID),]
+nrow(dup)
+df <- df[!df$PATIENT_ID %in% dup$PATIENT_ID,]
+length(unique(df$PATIENT_ID))
+
+# determine optimal cutpoint of variables
+res.cut1 <- surv_cutpoint(df, time = "time", event = "status", 
+                          variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
+summary(res.cut1)
+
+# plot cutpoint for ITGAE
+# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
+plot(res.cut, "ITGB3", palette = "npg")
+plot(res.cut, "ITGAE", palette = "npg")
+plot(res.cut, "CD3E", palette = "npg")
+plot(res.cut, "CD8A", palette = "npg")
+
+# categorise variables
+res.cat1 <- surv_categorize(res.cut1)
+head(res.cat1)
+
+res.cat2 <- rbind(res.cat, res.cat1)
+
+# without using cut-offs - use res.cat (already used cut offs to decide high/low)
+res.cat2$AP <- ifelse(res.cat2$ITGB3 == "high" & res.cat2$ITGAE == "high"
+                      & res.cat2$CD3E == "high" & res.cat2$CD8A == "high",
+                      "High", "Low")
+fit <- survfit(Surv(time, status) ~AP, data = res.cat2)
 ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
