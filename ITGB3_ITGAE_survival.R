@@ -1523,6 +1523,8 @@ summary(res.cut)
 res.cat <- surv_categorize(res.cut)
 head(res.cat)
 
+# Small cell lung cancer
+
 # make gene names into row names, remove EntrezIDs
 # 83 patients
 rna1 <- read.delim("/stopgap/donglab/ling/R/megat/tcga/sclc_ucologne_2015/data_RNA_Seq_expression_median.txt")
@@ -1549,6 +1551,12 @@ clin1$status <- ifelse(grepl("1", clin1$OS_STATUS), "1",
 clin1$status <- as.numeric(clin1$status)
 
 table(clin1$UICC_TUMOR_STAGE)
+# select stage I
+stageI <- clin1[clin1$UICC_TUMOR_STAGE == "I",]
+stageIa <- clin1[clin1$UICC_TUMOR_STAGE == "Ia",]
+stageIb <- clin1[clin1$UICC_TUMOR_STAGE == "Ib",]
+stageIB <- clin1[clin1$UICC_TUMOR_STAGE == "IB",]
+clin1 <- rbind(stageI, stageIa, stageIb, stageIB)
 
 # genes of interest - ITGB3, ITGAE, CD8A, CD3E
 genes1 <- rna1[,colnames(rna1) %like% "ITGB3|ITGAE|CD8A|CD3E",]
