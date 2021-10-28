@@ -160,7 +160,11 @@ res.cat$AP <- ifelse(res.cat$ITGB3 == "high" & res.cat$ITGAE == "high"
                      & res.cat$CD3E == "high" & res.cat$CD8A == "high",
                      "High", "Low")
 fit <- survfit(Surv(time, status) ~AP, data = res.cat)
+
+setwd("/stopgap/donglab/ling/R/megat/figures/")
+# pdf and dev.off() doesn't work, so have to manually save as PDF
 ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
+
 
 
 #------ Lung adenocarcinoma--------------------
@@ -1466,7 +1470,7 @@ ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
 
 
 #------ Combine LUAD subset and SCLC--------------------
-
+setwd("/stopgap/donglab/ling/R/megat/tcga")
 # tidy RNA-Seq data
 list.files("luad/") %>%
   grep("rnaseq", x = ., value = TRUE) %>%
@@ -1578,13 +1582,6 @@ res.cut1 <- surv_cutpoint(df, time = "time", event = "status",
                           variables = c("ITGB3", "ITGAE", "CD8A", "CD3E"))
 summary(res.cut1)
 
-# plot cutpoint for ITGAE
-# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
-plot(res.cut, "ITGB3", palette = "npg")
-plot(res.cut, "ITGAE", palette = "npg")
-plot(res.cut, "CD3E", palette = "npg")
-plot(res.cut, "CD8A", palette = "npg")
-
 # categorise variables
 res.cat1 <- surv_categorize(res.cut1)
 head(res.cat1)
@@ -1596,4 +1593,6 @@ res.cat2$AP <- ifelse(res.cat2$ITGB3 == "high" & res.cat2$ITGAE == "high"
                       & res.cat2$CD3E == "high" & res.cat2$CD8A == "high",
                       "High", "Low")
 fit <- survfit(Surv(time, status) ~AP, data = res.cat2)
+
+setwd("/stopgap/donglab/ling/R/megat/figures/")
 ggsurvplot(fit, risk.table = TRUE, conf.int = TRUE, pval = TRUE)
